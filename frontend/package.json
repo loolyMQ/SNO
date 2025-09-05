@@ -1,0 +1,14 @@
+{
+  "name": "frontend",
+  "version": "0.1.0",
+  "private": true,
+  "devDependencies": {
+    "typescript": "^5.5.4"
+  },
+  "scripts": {
+    "dev": "echo dev frontend",
+    "build": "echo build frontend",
+    "lint": "echo lint",
+    "test": "echo test"
+  }
+}

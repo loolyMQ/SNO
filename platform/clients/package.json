@@ -1,0 +1,13 @@
+{
+  "name": "@platform/clients",
+  "version": "0.1.0",
+  "private": true,
+  "devDependencies": {
+    "typescript": "^5.5.4"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "echo lint",
+    "test": "echo test"
+  }
+}

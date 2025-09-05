@@ -1,0 +1,3 @@
+# Frontend
+
+Starter placeholder.
