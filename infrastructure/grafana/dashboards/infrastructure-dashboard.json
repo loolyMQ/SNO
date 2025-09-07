@@ -1,10 +1,10 @@
 {
   "id": null,
-  "title": "Карта науки - Микросервисы",
-    "tags": ["microservices", "science-map", "monitoring"],
+  "title": "Карта науки - Инфраструктура",
+    "tags": ["infrastructure", "science-map", "monitoring"],
     "style": "dark",
     "timezone": "browser",
-    "refresh": "5s",
+    "refresh": "10s",
     "time": {
       "from": "now-1h",
       "to": "now"
@@ -12,130 +12,13 @@
     "panels": [
       {
         "id": 1,
-        "title": "HTTP Requests Rate",
+        "title": "PostgreSQL Connections",
         "type": "graph",
         "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
         "targets": [
           {
-            "expr": "sum(rate(http_requests_total[5m])) by (job)",
-            "legendFormat": "{{job}}"
-          }
-        ],
-        "yAxes": [
-          {
-            "label": "Requests/sec",
-            "min": 0
-          }
-        ],
-        "xAxes": [
-          {
-            "type": "time"
-          }
-        ]
-      },
-      {
-        "id": 2,
-        "title": "HTTP Response Time (95th percentile)",
-        "type": "graph",
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
-        "targets": [
-          {
-            "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, job))",
-            "legendFormat": "{{job}} - 95th percentile"
-          },
-          {
-            "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, job))",
-            "legendFormat": "{{job}} - 50th percentile"
-          }
-        ],
-        "yAxes": [
-          {
-            "label": "Seconds",
-            "min": 0
-          }
-        ]
-      },
-      {
-        "id": 3,
-        "title": "Active HTTP Requests",
-        "type": "graph",
-        "gridPos": {"h": 8, "w": 8, "x": 0, "y": 8},
-        "targets": [
-          {
-            "expr": "sum(http_active_requests) by (job)",
-            "legendFormat": "{{job}}"
-          }
-        ],
-        "yAxes": [
-          {
-            "label": "Active Requests",
-            "min": 0
-          }
-        ]
-      },
-      {
-        "id": 4,
-        "title": "HTTP Status Codes",
-        "type": "graph",
-        "gridPos": {"h": 8, "w": 8, "x": 8, "y": 8},
-        "targets": [
-          {
-            "expr": "sum(rate(http_requests_total[5m])) by (status_code, job)",
-            "legendFormat": "{{job}} - {{status_code}}"
-          }
-        ],
-        "yAxes": [
-          {
-            "label": "Requests/sec",
-            "min": 0
-          }
-        ]
-      },
-      {
-        "id": 5,
-        "title": "Database Query Rate",
-        "type": "graph",
-        "gridPos": {"h": 8, "w": 8, "x": 16, "y": 8},
-        "targets": [
-          {
-            "expr": "sum(rate(database_queries_total[5m])) by (operation, job)",
-            "legendFormat": "{{job}} - {{operation}}"
-          }
-        ],
-        "yAxes": [
-          {
-            "label": "Queries/sec",
-            "min": 0
-          }
-        ]
-      },
-      {
-        "id": 6,
-        "title": "Database Query Duration",
-        "type": "graph",
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
-        "targets": [
-          {
-            "expr": "histogram_quantile(0.95, sum(rate(database_query_duration_seconds_bucket[5m])) by (le, job))",
-            "legendFormat": "{{job}} - 95th percentile"
-          }
-        ],
-        "yAxes": [
-          {
-            "label": "Seconds",
-            "min": 0
-          }
-        ]
-      },
-      {
-        "id": 7,
-        "title": "Database Connection Pool",
-        "type": "graph",
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
-        "targets": [
-          {
-            "expr": "database_connection_pool_size",
-            "legendFormat": "{{state}}"
+            "expr": "pg_stat_database_numbackends",
+            "legendFormat": "{{datname}}"
           }
         ],
         "yAxes": [
@@ -146,14 +29,130 @@
         ]
       },
       {
+        "id": 2,
+        "title": "PostgreSQL Transactions",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+        "targets": [
+          {
+            "expr": "rate(pg_stat_database_xact_commit[5m])",
+            "legendFormat": "{{datname}} - Commits/sec"
+          },
+          {
+            "expr": "rate(pg_stat_database_xact_rollback[5m])",
+            "legendFormat": "{{datname}} - Rollbacks/sec"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Transactions/sec",
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Redis Memory Usage",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 8, "x": 0, "y": 8},
+        "targets": [
+          {
+            "expr": "redis_memory_used_bytes / 1024 / 1024",
+            "legendFormat": "Used Memory (MB)"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "MB",
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Redis Operations",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 8, "x": 8, "y": 8},
+        "targets": [
+          {
+            "expr": "rate(redis_commands_processed_total[5m])",
+            "legendFormat": "Commands/sec"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Operations/sec",
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Redis Connected Clients",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 8, "x": 16, "y": 8},
+        "targets": [
+          {
+            "expr": "redis_connected_clients",
+            "legendFormat": "Connected Clients"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Clients",
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "RabbitMQ Queue Messages",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+        "targets": [
+          {
+            "expr": "rabbitmq_queue_messages",
+            "legendFormat": "{{queue}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Messages",
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "RabbitMQ Message Rate",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+        "targets": [
+          {
+            "expr": "rate(rabbitmq_queue_messages_published_total[5m])",
+            "legendFormat": "{{queue}} - Published/sec"
+          },
+          {
+            "expr": "rate(rabbitmq_queue_messages_delivered_total[5m])",
+            "legendFormat": "{{queue}} - Delivered/sec"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Messages/sec",
+            "min": 0
+          }
+        ]
+      },
+      {
         "id": 8,
-        "title": "Memory Usage",
+        "title": "Meilisearch Index Size",
         "type": "graph",
         "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
         "targets": [
           {
-            "expr": "process_resident_memory_bytes / 1024 / 1024",
-            "legendFormat": "{{job}} - Memory (MB)"
+            "expr": "meilisearch_index_size_bytes / 1024 / 1024",
+            "legendFormat": "{{index}} - Size (MB)"
           }
         ],
         "yAxes": [
@@ -165,31 +164,30 @@
       },
       {
         "id": 9,
-        "title": "CPU Usage",
+        "title": "Meilisearch Search Rate",
         "type": "graph",
         "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
         "targets": [
           {
-            "expr": "rate(process_cpu_seconds_total[5m]) * 100",
-            "legendFormat": "{{job}} - CPU %"
+            "expr": "rate(meilisearch_searches_total[5m])",
+            "legendFormat": "Searches/sec"
           }
         ],
         "yAxes": [
           {
-            "label": "Percent",
-            "min": 0,
-            "max": 100
+            "label": "Searches/sec",
+            "min": 0
           }
         ]
       },
       {
         "id": 10,
-        "title": "Service Health Status",
+        "title": "Infrastructure Health",
         "type": "stat",
         "gridPos": {"h": 4, "w": 24, "x": 0, "y": 32},
         "targets": [
           {
-            "expr": "up",
+            "expr": "up{job=~\"postgres|redis|rabbitmq|meilisearch\"}",
             "legendFormat": "{{job}}"
           }
         ],
