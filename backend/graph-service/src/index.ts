@@ -1,437 +1,242 @@
 import express from 'express';
-import neo4j from 'neo4j-driver';
-import { z } from 'zod';
 import { Logger, createKafkaClient, defaultKafkaConfig } from '@platform/shared';
 import { createMonitoring, MetricsServer } from '@platform/monitoring';
+import neo4j from 'neo4j-driver';
+import { z } from 'zod';
 
-const app = express();
-const port = process.env['PORT'] || 3003;
-const metricsPort = 9093;
+const SERVICE_NAME = 'graph-service';
+const PORT = parseInt(process.env['PORT'] || '3003', 10);
+const METRICS_PORT = parseInt(process.env['METRICS_PORT'] || '9093', 10);
+const NEO4J_URI = process.env['NEO4J_URI'] || 'bolt://localhost:7687';
+const NEO4J_USER = process.env['NEO4J_USER'] || 'neo4j';
+const NEO4J_PASSWORD = process.env['NEO4J_PASSWORD'] || 'password';
 
-// Инициализация логгера
 const logger = new Logger({
-  service: 'graph-service',
-  environment: process.env['NODE_ENV'] || 'development',
-});
+  service: SERVICE_NAME,
+  environment: (process.env['NODE_ENV'] as 'development' | 'staging' | 'production') || 'development',
+} as any);
 
-// Инициализация мониторинга
 const monitoring = createMonitoring({
-  serviceName: 'graph-service',
-  serviceVersion: '0.1.0',
-  environment: process.env['NODE_ENV'] || 'development',
+  serviceName: SERVICE_NAME,
+  serviceVersion: '1.0.0',
+  environment: (process.env['NODE_ENV'] as 'development' | 'staging' | 'production') || 'development',
+  metrics: {
+    enabled: true,
+    port: METRICS_PORT,
+    endpoint: '/metrics',
+    collectDefaultMetrics: true,
+  },
+  tracing: {
+    enabled: true,
+    exporter: 'console',
+  },
+  instrumentation: {
+    http: true,
+    express: true,
+    fs: false,
+    dns: false,
+    net: false,
+    pg: false,
+    redis: false,
+  },
 });
+const metricsServer = new MetricsServer(monitoring, METRICS_PORT);
 
-// Инициализация Kafka клиента
 const kafkaClient = createKafkaClient({
   ...defaultKafkaConfig,
-  clientId: 'graph-service',
+  clientId: `${SERVICE_NAME}-client`,
+  brokers: [process.env['KAFKA_BROKER_URL'] || 'localhost:9092'],
 }, logger);
 
-// Neo4j подключение
-const driver = neo4j.driver(
-  process.env['NEO4J_URI'] || 'bolt://localhost:7687',
-  neo4j.auth.basic(
-    process.env['NEO4J_USER'] || 'neo4j',
-    process.env['NEO4J_PASSWORD'] || 'password'
-  )
-);
+const driver = neo4j.driver(NEO4J_URI, neo4j.auth.basic(NEO4J_USER, NEO4J_PASSWORD));
 
-// Middleware
-app.use(express.json());
-
-// Мониторинг middleware
-app.use(monitoring.middleware.express);
-
-// Схемы валидации
-const createNodeSchema = z.object({
+// Validation schemas
+const nodeSchema = z.object({
   type: z.enum(['institute', 'department', 'researcher']),
   name: z.string().min(1),
   properties: z.record(z.any()).optional(),
 });
 
-const createRelationshipSchema = z.object({
+const relationshipSchema = z.object({
   fromId: z.string(),
   toId: z.string(),
-  type: z.string(),
+  type: z.string().min(1),
   properties: z.record(z.any()).optional(),
 });
 
-// Health check endpoint
-app.get('/health', async (req, res) => {
-  try {
-    const healthStatus = await monitoring.health.checkAll();
-    res.status(200).json({
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-      service: 'graph-service',
-      version: '0.1.0',
-      dependencies: healthStatus,
-    });
-  } catch (error) {
-    logger.error('Health check failed', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-    res.status(503).json({
-      status: 'unhealthy',
-      timestamp: new Date().toISOString(),
-      service: 'graph-service',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
+async function bootstrap() {
+  const app = express();
+  app.use(express.json());
+  // Middleware для метрик будет добавлен позже
 
-// Создание узла
-app.post('/api/graph/nodes', async (req, res) => {
-  try {
-    const validatedData = createNodeSchema.parse(req.body);
-    const { type, name, properties = {} } = validatedData;
+  // Health check endpoint
+  app.get('/health', async (req, res) => {
+    const health = await monitoring.getHealth();
+    res.status(health.status === 'healthy' ? 200 : 503).json(health);
+  });
 
-    const session = driver.session();
-    
+  // Create node endpoint
+  app.post('/api/graph/nodes', async (req, res) => {
     try {
+      const validatedData = nodeSchema.parse(req.body);
+      const session = driver.session();
+      
       const result = await session.run(
-        `CREATE (n:${type} {name: $name, properties: $properties, createdAt: datetime()})
-         RETURN n`,
-        { name, properties }
+        'CREATE (n:Node {type: $type, name: $name, properties: $properties}) RETURN n',
+        {
+          type: validatedData.type,
+          name: validatedData.name,
+          properties: validatedData.properties || {},
+        }
       );
-
-      const node = result.records[0].get('n');
-      const nodeId = node.identity.toString();
-
-      // Отправляем событие в Kafka
+      
+      const node = result.records[0]?.get('n');
+      const nodeId = node?.identity.toString();
+      
+      // Publish node created event
       await kafkaClient.sendMessage({
         topic: 'graph-events',
         key: nodeId,
         value: {
-          event: 'node.created',
-          data: {
-            id: nodeId,
-            type,
-            name,
-            properties,
-            createdAt: new Date().toISOString(),
-          },
+          eventType: 'node.created',
+          nodeId,
+          type: validatedData.type,
+          name: validatedData.name,
           timestamp: new Date().toISOString(),
-          source: 'graph-service',
-        },
-        headers: {
-          'content-type': 'application/json',
-          'source': 'graph-service',
         },
       });
-
-      logger.info('Node created successfully', {
+      
+      logger.info('Node created successfully', { 
+        service: SERVICE_NAME,
         nodeId,
-        type,
-        name,
-      });
-
-      res.status(201).json({
-        success: true,
+        type: validatedData.type,
+        name: validatedData.name 
+      } as any);
+      
+      return res.status(201).json({ 
         message: 'Node created successfully',
-        node: {
-          id: nodeId,
-          type,
-          name,
-          properties,
-        },
+        nodeId,
+        node: node?.properties 
       });
-    } finally {
-      await session.close();
+    } catch (error) {
+      logger.error('Failed to create node', { 
+        service: SERVICE_NAME,
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      } as any);
+      return res.status(400).json({ error: 'Failed to create node' });
     }
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({
-        error: 'Validation error',
-        details: error.errors,
-      });
-    }
+  });
 
-    logger.error('Failed to create node', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      body: req.body,
-    });
-
-    res.status(500).json({
-      error: 'Failed to create node',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
-
-// Создание связи
-app.post('/api/graph/relationships', async (req, res) => {
-  try {
-    const validatedData = createRelationshipSchema.parse(req.body);
-    const { fromId, toId, type, properties = {} } = validatedData;
-
-    const session = driver.session();
-    
+  // Create relationship endpoint
+  app.post('/api/graph/relationships', async (req, res) => {
     try {
+      const validatedData = relationshipSchema.parse(req.body);
+      const session = driver.session();
+      
       const result = await session.run(
-        `MATCH (a), (b)
-         WHERE id(a) = $fromId AND id(b) = $toId
-         CREATE (a)-[r:${type} {properties: $properties, createdAt: datetime()}]->(b)
-         RETURN r`,
-        { fromId: parseInt(fromId), toId: parseInt(toId), properties }
+        'MATCH (a:Node), (b:Node) WHERE id(a) = $fromId AND id(b) = $toId CREATE (a)-[r:RELATIONSHIP {type: $type, properties: $properties}]->(b) RETURN r',
+        {
+          fromId: parseInt(validatedData.fromId),
+          toId: parseInt(validatedData.toId),
+          type: validatedData.type,
+          properties: validatedData.properties || {},
+        }
       );
-
-      if (result.records.length === 0) {
-        return res.status(404).json({
-          error: 'Nodes not found',
-          message: 'One or both nodes not found',
-        });
-      }
-
-      const relationship = result.records[0].get('r');
-      const relationshipId = relationship.identity.toString();
-
-      // Отправляем событие в Kafka
+      
+      const relationship = result.records[0]?.get('r');
+      const relationshipId = relationship?.identity.toString();
+      
+      // Publish relationship created event
       await kafkaClient.sendMessage({
         topic: 'graph-events',
         key: relationshipId,
         value: {
-          event: 'relationship.created',
-          data: {
-            id: relationshipId,
-            fromId,
-            toId,
-            type,
-            properties,
-            createdAt: new Date().toISOString(),
-          },
+          eventType: 'relationship.created',
+          relationshipId,
+          fromId: validatedData.fromId,
+          toId: validatedData.toId,
+          type: validatedData.type,
           timestamp: new Date().toISOString(),
-          source: 'graph-service',
-        },
-        headers: {
-          'content-type': 'application/json',
-          'source': 'graph-service',
         },
       });
-
-      logger.info('Relationship created successfully', {
+      
+      logger.info('Relationship created successfully', { 
+        service: SERVICE_NAME,
         relationshipId,
-        fromId,
-        toId,
-        type,
-      });
-
-      res.status(201).json({
-        success: true,
+        fromId: validatedData.fromId,
+        toId: validatedData.toId,
+        type: validatedData.type 
+      } as any);
+      
+      return res.status(201).json({ 
         message: 'Relationship created successfully',
-        relationship: {
-          id: relationshipId,
-          fromId,
-          toId,
-          type,
-          properties,
-        },
+        relationshipId,
+        relationship: relationship?.properties 
       });
-    } finally {
-      await session.close();
+    } catch (error) {
+      logger.error('Failed to create relationship', { 
+        service: SERVICE_NAME,
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      } as any);
+      return res.status(400).json({ error: 'Failed to create relationship' });
     }
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({
-        error: 'Validation error',
-        details: error.errors,
-      });
-    }
+  });
 
-    logger.error('Failed to create relationship', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      body: req.body,
-    });
-
-    res.status(500).json({
-      error: 'Failed to create relationship',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
-
-// Получение узлов
-app.get('/api/graph/nodes', async (req, res) => {
-  try {
-    const { type, limit = 100 } = req.query;
-    
-    const session = driver.session();
-    
+  // Get all nodes endpoint
+  app.get('/api/graph/nodes', async (req, res) => {
     try {
-      let query = 'MATCH (n)';
-      const params: any = { limit: parseInt(limit as string) };
+      const session = driver.session();
+      const result = await session.run('MATCH (n:Node) RETURN n LIMIT 100');
       
-      if (type) {
-        query += ` WHERE n:${type}`;
-      }
+      const nodes = result.records.map(record => ({
+        id: record.get('n').identity.toString(),
+        properties: record.get('n').properties,
+      }));
       
-      query += ' RETURN n LIMIT $limit';
-
-      const result = await session.run(query, params);
-      
-      const nodes = result.records.map(record => {
-        const node = record.get('n');
-        return {
-          id: node.identity.toString(),
-          labels: node.labels,
-          properties: node.properties,
-        };
-      });
-
-      res.status(200).json({
-        success: true,
-        nodes,
-        count: nodes.length,
-      });
-    } finally {
-      await session.close();
+      return res.json({ nodes });
+    } catch (error) {
+      logger.error('Failed to get nodes', { 
+        service: SERVICE_NAME,
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      } as any);
+      return res.status(500).json({ error: 'Failed to get nodes' });
     }
-  } catch (error) {
-    logger.error('Failed to get nodes', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-
-    res.status(500).json({
-      error: 'Failed to get nodes',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
-
-// Получение связей
-app.get('/api/graph/relationships', async (req, res) => {
-  try {
-    const { type, limit = 100 } = req.query;
-    
-    const session = driver.session();
-    
-    try {
-      let query = 'MATCH ()-[r]->()';
-      const params: any = { limit: parseInt(limit as string) };
-      
-      if (type) {
-        query += ` WHERE type(r) = '${type}'`;
-      }
-      
-      query += ' RETURN r LIMIT $limit';
-
-      const result = await session.run(query, params);
-      
-      const relationships = result.records.map(record => {
-        const rel = record.get('r');
-        return {
-          id: rel.identity.toString(),
-          type: rel.type,
-          properties: rel.properties,
-        };
-      });
-
-      res.status(200).json({
-        success: true,
-        relationships,
-        count: relationships.length,
-      });
-    } finally {
-      await session.close();
-    }
-  } catch (error) {
-    logger.error('Failed to get relationships', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-
-    res.status(500).json({
-      error: 'Failed to get relationships',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
-
-// Error handling middleware
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  logger.error('Unhandled error', {
-    error: err.message,
-    stack: err.stack,
-    url: req.url,
-    method: req.method,
   });
 
-  res.status(500).json({
-    error: 'Internal server error',
-    message: process.env['NODE_ENV'] === 'development' ? err.message : 'Something went wrong',
+  // Start the server
+  const server = app.listen(PORT, () => {
+    logger.info(`${SERVICE_NAME} listening on port ${PORT}`, {
+      service: SERVICE_NAME,
+      port: PORT,
+      metricsPort: METRICS_PORT,
+      environment: process.env['NODE_ENV'] || 'development',
+    } as any);
+    monitoring['tracingManager'].start();
+    metricsServer.start();
+    kafkaClient.connect().then(() => logger.info('Kafka producer connected.')).catch(err => logger.error('Failed to connect Kafka producer', { 
+      service: SERVICE_NAME,
+      error: err.message 
+    } as any));
   });
-});
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({
-    error: 'Not found',
-    message: `Route ${req.method} ${req.originalUrl} not found`,
-  });
-});
-
-// Graceful shutdown
-process.on('SIGTERM', async () => {
-  logger.info('SIGTERM received, shutting down gracefully');
-  
-  try {
+  // Graceful shutdown
+  process.on('SIGTERM', async () => {
+    logger.info('SIGTERM received, shutting down...', { service: SERVICE_NAME } as any);
     await kafkaClient.disconnect();
     await driver.close();
-    await monitoring.shutdown();
-    process.exit(0);
-  } catch (error) {
-    logger.error('Error during shutdown', {
-      error: error instanceof Error ? error.message : 'Unknown error',
+    metricsServer.stop();
+    server.close(() => {
+      logger.info('Server closed.', { service: SERVICE_NAME } as any);
+      process.exit(0);
     });
-    process.exit(1);
-  }
-});
-
-process.on('SIGINT', async () => {
-  logger.info('SIGINT received, shutting down gracefully');
-  
-  try {
-    await kafkaClient.disconnect();
-    await driver.close();
-    await monitoring.shutdown();
-    process.exit(0);
-  } catch (error) {
-    logger.error('Error during shutdown', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-    process.exit(1);
-  }
-});
-
-// Start server
-async function startServer() {
-  try {
-    // Подключаемся к Kafka
-    await kafkaClient.connect();
-    logger.info('Connected to Kafka');
-
-    // Создаем топик для событий графа
-    await kafkaClient.createTopic('graph-events', 3, 1);
-    logger.info('Created graph-events topic');
-
-    // Запускаем сервер метрик
-    const metricsServer = new MetricsServer(metricsPort);
-    await metricsServer.start();
-    logger.info(`Metrics server started on port ${metricsPort}`);
-
-    // Запускаем основной сервер
-    app.listen(port, () => {
-      logger.info(`Graph service server started on port ${port}`, {
-        port,
-        metricsPort,
-        environment: process.env['NODE_ENV'] || 'development',
-      });
-    });
-  } catch (error) {
-    logger.error('Failed to start server', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-    process.exit(1);
-  }
+  });
 }
 
-startServer();
+bootstrap().catch(err => {
+  logger.fatal('Failed to bootstrap Graph Service', { 
+    service: SERVICE_NAME,
+    error: err.message, 
+    stack: err.stack 
+  } as any);
+  process.exit(1);
+});

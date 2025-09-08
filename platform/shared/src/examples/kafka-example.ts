@@ -6,7 +6,7 @@ async function kafkaExample() {
   const logger = new Logger({
     service: 'kafka-example',
     environment: 'development',
-  });
+  } as any);
 
   // Создаем Kafka клиент
   const kafkaClient = createKafkaClient(defaultKafkaConfig, logger);
@@ -46,11 +46,12 @@ async function kafkaExample() {
       const message = JSON.parse(payload.message.value?.toString() || '{}');
       
       logger.info('Processing message', {
+        service: 'kafka-example',
         topic: payload.topic,
         partition: payload.partition,
         offset: payload.message.offset,
         message,
-      });
+      } as any);
 
       // Здесь ваша бизнес-логика
       switch (message.eventType) {
@@ -61,14 +62,15 @@ async function kafkaExample() {
           await handleUserUpdated(message);
           break;
         default:
-          logger.warn('Unknown event type', { eventType: message.eventType });
+          logger.warn('Unknown event type', { service: 'kafka-example', eventType: message.eventType } as any);
       }
     });
 
   } catch (error) {
     logger.error('Kafka example failed', {
+      service: 'kafka-example',
       error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    } as any);
   } finally {
     // Отключаемся от Kafka
     await kafkaClient.disconnect();

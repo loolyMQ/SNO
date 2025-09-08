@@ -2,6 +2,7 @@
   "name": "science-map-monorepo",
   "private": true,
   "version": "0.1.0",
+  "packageManager": "pnpm@8.15.0",
   "workspaces": [
     "frontend",
     "backend/*",

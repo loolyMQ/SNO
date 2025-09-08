@@ -55,7 +55,7 @@ export class KafkaClient {
         maxRetryTime: 30000,
       },
       ssl: config.ssl,
-      sasl: config.sasl,
+      sasl: config.sasl as any,
     });
 
     this.producer = this.kafka.producer();
@@ -68,13 +68,13 @@ export class KafkaClient {
       this.logger.info('Kafka producer connected successfully', {
         service: 'kafka-client',
         component: 'producer',
-      });
+      } as any);
     } catch (error) {
       this.logger.error('Failed to connect Kafka producer', {
         service: 'kafka-client',
         component: 'producer',
         error: error instanceof Error ? error.message : 'Unknown error',
-      });
+      } as any);
       throw error;
     }
   }
@@ -89,12 +89,12 @@ export class KafkaClient {
       this.isConnected = false;
       this.logger.info('Kafka client disconnected successfully', {
         service: 'kafka-client',
-      });
+      } as any);
     } catch (error) {
       this.logger.error('Failed to disconnect Kafka client', {
         service: 'kafka-client',
         error: error instanceof Error ? error.message : 'Unknown error',
-      });
+      } as any);
       throw error;
     }
   }
@@ -125,7 +125,7 @@ export class KafkaClient {
         component: 'producer',
         topic: payload.topic,
         key: payload.key,
-      });
+      } as any);
     } catch (error) {
       this.logger.error('Failed to send message', {
         service: 'kafka-client',
@@ -133,7 +133,7 @@ export class KafkaClient {
         topic: payload.topic,
         key: payload.key,
         error: error instanceof Error ? error.message : 'Unknown error',
-      });
+      } as any);
       throw error;
     }
   }
@@ -161,7 +161,7 @@ export class KafkaClient {
       component: 'consumer',
       groupId: config.groupId,
       topics: config.topics,
-    });
+    } as any);
   }
 
   async startConsuming(
@@ -183,7 +183,7 @@ export class KafkaClient {
             partition: payload.partition,
             offset: payload.message.offset,
             error: error instanceof Error ? error.message : 'Unknown error',
-          });
+          } as any);
           throw error;
         }
       },
@@ -192,7 +192,7 @@ export class KafkaClient {
     this.logger.info('Kafka consumer started successfully', {
       service: 'kafka-client',
       component: 'consumer',
-    });
+    } as any);
   }
 
   async createTopic(topic: string, partitions = 1, replicationFactor = 1): Promise<void> {
@@ -216,14 +216,14 @@ export class KafkaClient {
         topic,
         partitions,
         replicationFactor,
-      });
+      } as any);
     } catch (error) {
       this.logger.error('Failed to create topic', {
         service: 'kafka-client',
         component: 'admin',
         topic,
         error: error instanceof Error ? error.message : 'Unknown error',
-      });
+      } as any);
       throw error;
     } finally {
       await admin.disconnect();
@@ -243,7 +243,7 @@ export class KafkaClient {
         component: 'admin',
         topic,
         error: error instanceof Error ? error.message : 'Unknown error',
-      });
+      } as any);
       throw error;
     } finally {
       await admin.disconnect();

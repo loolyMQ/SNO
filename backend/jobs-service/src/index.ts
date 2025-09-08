@@ -1,451 +1,297 @@
 import express from 'express';
+import { Logger, createKafkaClient, defaultKafkaConfig } from '@platform/shared';
+import { createMonitoring, MetricsServer } from '@platform/monitoring';
 import { Queue, Worker, Job } from 'bullmq';
 import IORedis from 'ioredis';
 import { z } from 'zod';
-import { Logger, createKafkaClient, defaultKafkaConfig } from '@platform/shared';
-import { createMonitoring, MetricsServer } from '@platform/monitoring';
 
-const app = express();
-const port = process.env['PORT'] || 3004;
-const metricsPort = 9094;
+const SERVICE_NAME = 'jobs-service';
+const PORT = parseInt(process.env['PORT'] || '3004', 10);
+const METRICS_PORT = parseInt(process.env['METRICS_PORT'] || '9094', 10);
+const REDIS_HOST = process.env['REDIS_HOST'] || 'localhost';
+const REDIS_PORT = parseInt(process.env['REDIS_PORT'] || '6379', 10);
 
-// Инициализация логгера
 const logger = new Logger({
-  service: 'jobs-service',
-  environment: process.env['NODE_ENV'] || 'development',
-});
+  service: SERVICE_NAME,
+  environment: (process.env['NODE_ENV'] as 'development' | 'staging' | 'production') || 'development',
+} as any);
 
-// Инициализация мониторинга
 const monitoring = createMonitoring({
-  serviceName: 'jobs-service',
-  serviceVersion: '0.1.0',
-  environment: process.env['NODE_ENV'] || 'development',
+  serviceName: SERVICE_NAME,
+  serviceVersion: '1.0.0',
+  environment: (process.env['NODE_ENV'] as 'development' | 'staging' | 'production') || 'development',
+  metrics: {
+    enabled: true,
+    port: METRICS_PORT,
+    endpoint: '/metrics',
+    collectDefaultMetrics: true,
+  },
+  tracing: {
+    enabled: true,
+    exporter: 'console',
+  },
+  instrumentation: {
+    http: true,
+    express: true,
+    fs: false,
+    dns: false,
+    net: false,
+    pg: false,
+    redis: false,
+  },
 });
+const metricsServer = new MetricsServer(monitoring, METRICS_PORT);
 
-// Инициализация Kafka клиента
 const kafkaClient = createKafkaClient({
   ...defaultKafkaConfig,
-  clientId: 'jobs-service',
+  clientId: `${SERVICE_NAME}-client`,
+  brokers: [process.env['KAFKA_BROKER_URL'] || 'localhost:9092'],
 }, logger);
 
-// Redis подключение
-const redis = new IORedis({
-  host: process.env['REDIS_HOST'] || 'localhost',
-  port: parseInt(process.env['REDIS_PORT'] || '6379'),
-  password: process.env['REDIS_PASSWORD'],
+const connection = new IORedis({
+  host: REDIS_HOST,
+  port: REDIS_PORT,
+  maxRetriesPerRequest: null,
 });
 
-// Создание очередей
-const emailQueue = new Queue('email', { connection: redis });
-const dataProcessingQueue = new Queue('data-processing', { connection: redis });
-const notificationQueue = new Queue('notification', { connection: redis });
+const emailQueue = new Queue('email-queue', { connection });
+const dataProcessingQueue = new Queue('data-processing-queue', { connection });
 
-// Middleware
-app.use(express.json());
-
-// Мониторинг middleware
-app.use(monitoring.middleware.express);
-
-// Схемы валидации
-const createJobSchema = z.object({
-  type: z.enum(['email', 'data-processing', 'notification']),
-  data: z.record(z.any()),
-  options: z.object({
-    delay: z.number().optional(),
-    priority: z.number().optional(),
-    attempts: z.number().optional(),
-  }).optional(),
+// Validation schemas
+const emailJobSchema = z.object({
+  to: z.string().email(),
+  subject: z.string().min(1),
+  body: z.string().min(1),
+  priority: z.number().min(1).max(10).optional(),
 });
 
-// Health check endpoint
-app.get('/health', async (req, res) => {
-  try {
-    const healthStatus = await monitoring.health.checkAll();
-    res.status(200).json({
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-      service: 'jobs-service',
-      version: '0.1.0',
-      dependencies: healthStatus,
-    });
-  } catch (error) {
-    logger.error('Health check failed', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-    res.status(503).json({
-      status: 'unhealthy',
-      timestamp: new Date().toISOString(),
-      service: 'jobs-service',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
+const dataProcessingJobSchema = z.object({
+  dataId: z.string().min(1),
+  operation: z.enum(['analyze', 'transform', 'validate']),
+  parameters: z.record(z.any()).optional(),
 });
 
-// Создание задачи
-app.post('/api/jobs', async (req, res) => {
-  try {
-    const validatedData = createJobSchema.parse(req.body);
-    const { type, data, options = {} } = validatedData;
-
-    let queue: Queue;
-    switch (type) {
-      case 'email':
-        queue = emailQueue;
-        break;
-      case 'data-processing':
-        queue = dataProcessingQueue;
-        break;
-      case 'notification':
-        queue = notificationQueue;
-        break;
-      default:
-        return res.status(400).json({
-          error: 'Invalid job type',
-          message: 'Job type must be one of: email, data-processing, notification',
-        });
-    }
-
-    const job = await queue.add(type, data, {
-      delay: options.delay,
-      priority: options.priority,
-      attempts: options.attempts || 3,
-    });
-
-    // Отправляем событие в Kafka
-    await kafkaClient.sendMessage({
-      topic: 'job-events',
-      key: job.id,
-      value: {
-        event: 'job.created',
-        data: {
-          id: job.id,
-          type,
-          data,
-          options,
-          createdAt: new Date().toISOString(),
-        },
-        timestamp: new Date().toISOString(),
-        source: 'jobs-service',
-      },
-      headers: {
-        'content-type': 'application/json',
-        'source': 'jobs-service',
-      },
-    });
-
-    logger.info('Job created successfully', {
+// Workers
+const emailWorker = new Worker('email-queue', async (job: Job) => {
+  logger.info('Processing email job', { 
+    service: SERVICE_NAME,
+    jobId: job.id,
+    to: job.data.to 
+  } as any);
+  
+  // Simulate email sending
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // Publish job completed event
+  await kafkaClient.sendMessage({
+    topic: 'job-events',
+    key: job.id?.toString(),
+    value: {
+      eventType: 'job.completed',
       jobId: job.id,
-      type,
-      data,
-    });
+      jobType: 'email',
+      status: 'completed',
+      timestamp: new Date().toISOString(),
+    },
+  });
+  
+  return { success: true, messageId: `msg_${Date.now()}` };
+}, { connection });
 
-    res.status(201).json({
-      success: true,
-      message: 'Job created successfully',
-      job: {
-        id: job.id,
-        type,
-        data,
-        options,
-      },
-    });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({
-        error: 'Validation error',
-        details: error.errors,
+const dataProcessingWorker = new Worker('data-processing-queue', async (job: Job) => {
+  logger.info('Processing data job', { 
+    service: SERVICE_NAME,
+    jobId: job.id,
+    operation: job.data.operation 
+  } as any);
+  
+  // Simulate data processing
+  await new Promise(resolve => setTimeout(resolve, 2000));
+  
+  // Publish job completed event
+  await kafkaClient.sendMessage({
+    topic: 'job-events',
+    key: job.id?.toString(),
+    value: {
+      eventType: 'job.completed',
+      jobId: job.id,
+      jobType: 'data-processing',
+      operation: job.data.operation,
+      status: 'completed',
+      timestamp: new Date().toISOString(),
+    },
+  });
+  
+  return { success: true, processedData: job.data.dataId };
+}, { connection });
+
+async function bootstrap() {
+  const app = express();
+  app.use(express.json());
+  // Middleware для метрик будет добавлен позже
+
+  // Health check endpoint
+  app.get('/health', async (req, res) => {
+    const health = await monitoring.getHealth();
+    res.status(health.status === 'healthy' ? 200 : 503).json(health);
+  });
+
+  // Create email job endpoint
+  app.post('/api/jobs/email', async (req, res) => {
+    try {
+      const validatedData = emailJobSchema.parse(req.body);
+      
+      const job = await emailQueue.add('send-email', {
+        to: validatedData.to,
+        subject: validatedData.subject,
+        body: validatedData.body,
+        priority: validatedData.priority || 5,
       });
-    }
-
-    logger.error('Failed to create job', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      body: req.body,
-    });
-
-    res.status(500).json({
-      error: 'Failed to create job',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
-
-// Получение статуса задачи
-app.get('/api/jobs/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { type } = req.query;
-
-    if (!type || !['email', 'data-processing', 'notification'].includes(type as string)) {
-      return res.status(400).json({
-        error: 'Invalid job type',
-        message: 'Job type is required and must be one of: email, data-processing, notification',
+      
+      // Publish job created event
+      await kafkaClient.sendMessage({
+        topic: 'job-events',
+        key: job.id?.toString(),
+        value: {
+          eventType: 'job.created',
+          jobId: job.id,
+          jobType: 'email',
+          status: 'queued',
+          timestamp: new Date().toISOString(),
+        },
       });
-    }
-
-    let queue: Queue;
-    switch (type) {
-      case 'email':
-        queue = emailQueue;
-        break;
-      case 'data-processing':
-        queue = dataProcessingQueue;
-        break;
-      case 'notification':
-        queue = notificationQueue;
-        break;
-    }
-
-    const job = await queue.getJob(id);
-    
-    if (!job) {
-      return res.status(404).json({
-        error: 'Job not found',
-        message: 'Job with this ID not found',
+      
+      logger.info('Email job created', { 
+        service: SERVICE_NAME,
+        jobId: job.id,
+        to: validatedData.to 
+      } as any);
+      
+      return res.status(201).json({ 
+        message: 'Email job created successfully',
+        jobId: job.id 
       });
+    } catch (error) {
+      logger.error('Failed to create email job', { 
+        service: SERVICE_NAME,
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      } as any);
+      return res.status(400).json({ error: 'Failed to create email job' });
     }
+  });
 
-    res.status(200).json({
-      success: true,
-      job: {
-        id: job.id,
-        type,
-        data: job.data,
+  // Create data processing job endpoint
+  app.post('/api/jobs/data-processing', async (req, res) => {
+    try {
+      const validatedData = dataProcessingJobSchema.parse(req.body);
+      
+      const job = await dataProcessingQueue.add('process-data', {
+        dataId: validatedData.dataId,
+        operation: validatedData.operation,
+        parameters: validatedData.parameters || {},
+      });
+      
+      // Publish job created event
+      await kafkaClient.sendMessage({
+        topic: 'job-events',
+        key: job.id?.toString(),
+        value: {
+          eventType: 'job.created',
+          jobId: job.id,
+          jobType: 'data-processing',
+          operation: validatedData.operation,
+          status: 'queued',
+          timestamp: new Date().toISOString(),
+        },
+      });
+      
+      logger.info('Data processing job created', { 
+        service: SERVICE_NAME,
+        jobId: job.id,
+        operation: validatedData.operation 
+      } as any);
+      
+      return res.status(201).json({ 
+        message: 'Data processing job created successfully',
+        jobId: job.id 
+      });
+    } catch (error) {
+      logger.error('Failed to create data processing job', { 
+        service: SERVICE_NAME,
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      } as any);
+      return res.status(400).json({ error: 'Failed to create data processing job' });
+    }
+  });
+
+  // Get job status endpoint
+  app.get('/api/jobs/:jobId', async (req, res) => {
+    try {
+      const { jobId } = req.params;
+      
+      // Check both queues for the job
+      const emailJob = await emailQueue.getJob(jobId);
+      const dataJob = await dataProcessingQueue.getJob(jobId);
+      
+      const job = emailJob || dataJob;
+      
+      if (!job) {
+        return res.status(404).json({ error: 'Job not found' });
+      }
+      
+      return res.json({
+        jobId: job.id,
+        status: await job.getState(),
         progress: job.progress,
-        state: await job.getState(),
+        data: job.data,
+        result: job.returnvalue,
         createdAt: job.timestamp,
-        processedOn: job.processedOn,
-        finishedOn: job.finishedOn,
-        failedReason: job.failedReason,
-      },
-    });
-  } catch (error) {
-    logger.error('Failed to get job status', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      jobId: req.params.id,
-    });
-
-    res.status(500).json({
-      error: 'Failed to get job status',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
-
-// Получение статистики очередей
-app.get('/api/jobs/stats', async (req, res) => {
-  try {
-    const queues = [
-      { name: 'email', queue: emailQueue },
-      { name: 'data-processing', queue: dataProcessingQueue },
-      { name: 'notification', queue: notificationQueue },
-    ];
-
-    const stats = await Promise.all(
-      queues.map(async ({ name, queue }) => {
-        const waiting = await queue.getWaiting();
-        const active = await queue.getActive();
-        const completed = await queue.getCompleted();
-        const failed = await queue.getFailed();
-
-        return {
-          name,
-          waiting: waiting.length,
-          active: active.length,
-          completed: completed.length,
-          failed: failed.length,
-        };
-      })
-    );
-
-    res.status(200).json({
-      success: true,
-      stats,
-    });
-  } catch (error) {
-    logger.error('Failed to get queue stats', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-
-    res.status(500).json({
-      error: 'Failed to get queue stats',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
-
-// Error handling middleware
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  logger.error('Unhandled error', {
-    error: err.message,
-    stack: err.stack,
-    url: req.url,
-    method: req.method,
+      });
+    } catch (error) {
+      logger.error('Failed to get job status', { 
+        service: SERVICE_NAME,
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      } as any);
+      return res.status(500).json({ error: 'Failed to get job status' });
+    }
   });
 
-  res.status(500).json({
-    error: 'Internal server error',
-    message: process.env['NODE_ENV'] === 'development' ? err.message : 'Something went wrong',
+  // Start the server
+  const server = app.listen(PORT, () => {
+    logger.info(`${SERVICE_NAME} listening on port ${PORT}`, {
+      service: SERVICE_NAME,
+      port: PORT,
+      metricsPort: METRICS_PORT,
+      environment: process.env['NODE_ENV'] || 'development',
+    } as any);
+    monitoring['tracingManager'].start();
+    metricsServer.start();
+    kafkaClient.connect().then(() => logger.info('Kafka producer connected.')).catch(err => logger.error('Failed to connect Kafka producer', { 
+      service: SERVICE_NAME,
+      error: err.message 
+    } as any));
   });
-});
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({
-    error: 'Not found',
-    message: `Route ${req.method} ${req.originalUrl} not found`,
-  });
-});
-
-// Graceful shutdown
-process.on('SIGTERM', async () => {
-  logger.info('SIGTERM received, shutting down gracefully');
-  
-  try {
+  // Graceful shutdown
+  process.on('SIGTERM', async () => {
+    logger.info('SIGTERM received, shutting down...', { service: SERVICE_NAME } as any);
     await kafkaClient.disconnect();
     await emailQueue.close();
     await dataProcessingQueue.close();
-    await notificationQueue.close();
-    await redis.disconnect();
-    await monitoring.shutdown();
-    process.exit(0);
-  } catch (error) {
-    logger.error('Error during shutdown', {
-      error: error instanceof Error ? error.message : 'Unknown error',
+    await connection.disconnect();
+    metricsServer.stop();
+    server.close(() => {
+      logger.info('Server closed.', { service: SERVICE_NAME } as any);
+      process.exit(0);
     });
-    process.exit(1);
-  }
-});
-
-process.on('SIGINT', async () => {
-  logger.info('SIGINT received, shutting down gracefully');
-  
-  try {
-    await kafkaClient.disconnect();
-    await emailQueue.close();
-    await dataProcessingQueue.close();
-    await notificationQueue.close();
-    await redis.disconnect();
-    await monitoring.shutdown();
-    process.exit(0);
-  } catch (error) {
-    logger.error('Error during shutdown', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-    process.exit(1);
-  }
-});
-
-// Start server
-async function startServer() {
-  try {
-    // Подключаемся к Kafka
-    await kafkaClient.connect();
-    logger.info('Connected to Kafka');
-
-    // Создаем топик для событий задач
-    await kafkaClient.createTopic('job-events', 3, 1);
-    logger.info('Created job-events topic');
-
-    // Создаем воркеры
-    const emailWorker = new Worker('email', async (job: Job) => {
-      logger.info('Processing email job', { jobId: job.id, data: job.data });
-      
-      // Симуляция отправки email
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Отправляем событие в Kafka
-      await kafkaClient.sendMessage({
-        topic: 'job-events',
-        key: job.id,
-        value: {
-          event: 'job.completed',
-          data: {
-            id: job.id,
-            type: 'email',
-            data: job.data,
-            completedAt: new Date().toISOString(),
-          },
-          timestamp: new Date().toISOString(),
-          source: 'jobs-service',
-        },
-      });
-      
-      return { success: true, message: 'Email sent successfully' };
-    }, { connection: redis });
-
-    const dataProcessingWorker = new Worker('data-processing', async (job: Job) => {
-      logger.info('Processing data processing job', { jobId: job.id, data: job.data });
-      
-      // Симуляция обработки данных
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Отправляем событие в Kafka
-      await kafkaClient.sendMessage({
-        topic: 'job-events',
-        key: job.id,
-        value: {
-          event: 'job.completed',
-          data: {
-            id: job.id,
-            type: 'data-processing',
-            data: job.data,
-            completedAt: new Date().toISOString(),
-          },
-          timestamp: new Date().toISOString(),
-          source: 'jobs-service',
-        },
-      });
-      
-      return { success: true, message: 'Data processed successfully' };
-    }, { connection: redis });
-
-    const notificationWorker = new Worker('notification', async (job: Job) => {
-      logger.info('Processing notification job', { jobId: job.id, data: job.data });
-      
-      // Симуляция отправки уведомления
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Отправляем событие в Kafka
-      await kafkaClient.sendMessage({
-        topic: 'job-events',
-        key: job.id,
-        value: {
-          event: 'job.completed',
-          data: {
-            id: job.id,
-            type: 'notification',
-            data: job.data,
-            completedAt: new Date().toISOString(),
-          },
-          timestamp: new Date().toISOString(),
-          source: 'jobs-service',
-        },
-      });
-      
-      return { success: true, message: 'Notification sent successfully' };
-    }, { connection: redis });
-
-    logger.info('Workers started');
-
-    // Запускаем сервер метрик
-    const metricsServer = new MetricsServer(metricsPort);
-    await metricsServer.start();
-    logger.info(`Metrics server started on port ${metricsPort}`);
-
-    // Запускаем основной сервер
-    app.listen(port, () => {
-      logger.info(`Jobs service server started on port ${port}`, {
-        port,
-        metricsPort,
-        environment: process.env['NODE_ENV'] || 'development',
-      });
-    });
-  } catch (error) {
-    logger.error('Failed to start server', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-    process.exit(1);
-  }
+  });
 }
 
-startServer();
+bootstrap().catch(err => {
+  logger.fatal('Failed to bootstrap Jobs Service', { 
+    service: SERVICE_NAME,
+    error: err.message, 
+    stack: err.stack 
+  } as any);
+  process.exit(1);
+});

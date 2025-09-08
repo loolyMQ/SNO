@@ -1,43 +1,59 @@
 import express from 'express';
+import { Logger, createKafkaClient, defaultKafkaConfig } from '@platform/shared';
+import { createMonitoring, MetricsServer } from '@platform/monitoring';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
-import { Logger, createKafkaClient, defaultKafkaConfig } from '@platform/shared';
-import { createMonitoring, MetricsServer } from '@platform/monitoring';
 
-const app = express();
-const port = process.env['PORT'] || 3002;
-const metricsPort = 9092;
+const SERVICE_NAME = 'auth-service';
+const PORT = parseInt(process.env['PORT'] || '3002', 10);
+const METRICS_PORT = parseInt(process.env['METRICS_PORT'] || '9092', 10);
+const JWT_SECRET = process.env['JWT_SECRET'] || 'supersecretjwtkey';
 
-// Инициализация логгера
 const logger = new Logger({
-  service: 'auth-service',
-  environment: process.env['NODE_ENV'] || 'development',
-});
+  service: SERVICE_NAME,
+  environment: (process.env['NODE_ENV'] as 'development' | 'staging' | 'production') || 'development',
+} as any);
 
-// Инициализация мониторинга
 const monitoring = createMonitoring({
-  serviceName: 'auth-service',
-  serviceVersion: '0.1.0',
-  environment: process.env['NODE_ENV'] || 'development',
+  serviceName: SERVICE_NAME,
+  serviceVersion: '1.0.0',
+  environment: (process.env['NODE_ENV'] as 'development' | 'staging' | 'production') || 'development',
+  metrics: {
+    enabled: true,
+    port: METRICS_PORT,
+    endpoint: '/metrics',
+    collectDefaultMetrics: true,
+  },
+  tracing: {
+    enabled: true,
+    exporter: 'console',
+  },
+  instrumentation: {
+    http: true,
+    express: true,
+    fs: false,
+    dns: false,
+    net: false,
+    pg: false,
+    redis: false,
+  },
 });
+const metricsServer = new MetricsServer(monitoring, METRICS_PORT);
 
-// Инициализация Kafka клиента
 const kafkaClient = createKafkaClient({
   ...defaultKafkaConfig,
-  clientId: 'auth-service',
+  clientId: `${SERVICE_NAME}-client`,
+  brokers: [process.env['KAFKA_BROKER_URL'] || 'localhost:9092'],
 }, logger);
 
-// Middleware
-app.use(express.json());
+// Mock database
+const users: any[] = [];
 
-// Мониторинг middleware
-app.use(monitoring.middleware.express);
-
-// Схемы валидации
+// Validation schemas
 const registerSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(8),
+  password: z.string().min(6),
   name: z.string().min(2),
 });
 
@@ -46,334 +62,146 @@ const loginSchema = z.object({
   password: z.string(),
 });
 
-// Временное хранилище пользователей (в реальном проекте будет база данных)
-const users = new Map<string, {
-  id: string;
-  email: string;
-  password: string;
-  name: string;
-  createdAt: Date;
-}>();
+async function bootstrap() {
+  const app = express();
+  app.use(express.json());
+  // Middleware для метрик будет добавлен позже
 
-// Health check endpoint
-app.get('/health', async (req, res) => {
-  try {
-    const healthStatus = await monitoring.health.checkAll();
-    res.status(200).json({
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-      service: 'auth-service',
-      version: '0.1.0',
-      dependencies: healthStatus,
-    });
-  } catch (error) {
-    logger.error('Health check failed', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-    res.status(503).json({
-      status: 'unhealthy',
-      timestamp: new Date().toISOString(),
-      service: 'auth-service',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
+  // Health check endpoint
+  app.get('/health', async (req, res) => {
+    const health = await monitoring.getHealth();
+    res.status(health.status === 'healthy' ? 200 : 503).json(health);
+  });
 
-// Регистрация пользователя
-app.post('/api/auth/register', async (req, res) => {
-  try {
-    const validatedData = registerSchema.parse(req.body);
-    const { email, password, name } = validatedData;
-
-    // Проверяем, существует ли пользователь
-    if (users.has(email)) {
-      return res.status(409).json({
-        error: 'User already exists',
-        message: 'User with this email already exists',
-      });
-    }
-
-    // Хешируем пароль
-    const hashedPassword = await bcrypt.hash(password, 12);
-    const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-    // Создаем пользователя
-    const user = {
-      id: userId,
-      email,
-      password: hashedPassword,
-      name,
-      createdAt: new Date(),
-    };
-
-    users.set(email, user);
-
-    // Отправляем событие в Kafka
-    await kafkaClient.sendMessage({
-      topic: 'user-events',
-      key: userId,
-      value: {
-        event: 'user.created',
-        data: {
-          id: userId,
-          email,
-          name,
-          createdAt: user.createdAt,
-        },
-        timestamp: new Date().toISOString(),
-        source: 'auth-service',
-      },
-      headers: {
-        'content-type': 'application/json',
-        'source': 'auth-service',
-      },
-    });
-
-    logger.info('User registered successfully', {
-      userId,
-      email,
-      name,
-    });
-
-    res.status(201).json({
-      success: true,
-      message: 'User registered successfully',
-      user: {
-        id: userId,
-        email,
-        name,
-        createdAt: user.createdAt,
-      },
-    });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({
-        error: 'Validation error',
-        details: error.errors,
-      });
-    }
-
-    logger.error('Registration failed', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      body: req.body,
-    });
-
-    res.status(500).json({
-      error: 'Registration failed',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
-
-// Вход пользователя
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const validatedData = loginSchema.parse(req.body);
-    const { email, password } = validatedData;
-
-    // Находим пользователя
-    const user = users.get(email);
-    if (!user) {
-      return res.status(401).json({
-        error: 'Invalid credentials',
-        message: 'Invalid email or password',
-      });
-    }
-
-    // Проверяем пароль
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(401).json({
-        error: 'Invalid credentials',
-        message: 'Invalid email or password',
-      });
-    }
-
-    // Создаем JWT токен
-    const token = jwt.sign(
-      { 
-        userId: user.id, 
-        email: user.email,
-        name: user.name,
-      },
-      process.env['JWT_SECRET'] || 'your-secret-key',
-      { expiresIn: '24h' }
-    );
-
-    // Отправляем событие в Kafka
-    await kafkaClient.sendMessage({
-      topic: 'user-events',
-      key: user.id,
-      value: {
-        event: 'user.logged_in',
-        data: {
-          id: user.id,
+  // Register endpoint
+  app.post('/register', async (req, res) => {
+    try {
+      const validatedData = registerSchema.parse(req.body);
+      const hashedPassword = await bcrypt.hash(validatedData.password, 10);
+      
+      const user = {
+        id: Date.now().toString(),
+        email: validatedData.email,
+        name: validatedData.name,
+        password: hashedPassword,
+        createdAt: new Date().toISOString(),
+      };
+      
+      users.push(user);
+      
+      // Publish user created event
+      await kafkaClient.sendMessage({
+        topic: 'user-events',
+        key: user.id,
+        value: {
+          eventType: 'user.created',
+          userId: user.id,
           email: user.email,
           name: user.name,
-          loginAt: new Date(),
+          timestamp: new Date().toISOString(),
         },
-        timestamp: new Date().toISOString(),
-        source: 'auth-service',
-      },
-      headers: {
-        'content-type': 'application/json',
-        'source': 'auth-service',
-      },
-    });
-
-    logger.info('User logged in successfully', {
-      userId: user.id,
-      email: user.email,
-    });
-
-    res.status(200).json({
-      success: true,
-      message: 'Login successful',
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-      },
-    });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({
-        error: 'Validation error',
-        details: error.errors,
       });
+      
+      logger.info('User registered successfully', { 
+        service: SERVICE_NAME,
+        userId: user.id,
+        email: user.email 
+      } as any);
+      
+      res.status(201).json({ 
+        message: 'User registered successfully',
+        user: { id: user.id, email: user.email, name: user.name }
+      });
+    } catch (error) {
+      logger.error('Registration failed', { 
+        service: SERVICE_NAME,
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      } as any);
+      res.status(400).json({ error: 'Registration failed' });
     }
+  });
 
-    logger.error('Login failed', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      body: req.body,
-    });
-
-    res.status(500).json({
-      error: 'Login failed',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
-
-// Верификация токена
-app.get('/api/auth/verify', async (req, res) => {
-  try {
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    
-    if (!token) {
-      return res.status(401).json({
-        error: 'No token provided',
-        message: 'Authorization token is required',
+  // Login endpoint
+  app.post('/login', async (req, res) => {
+    try {
+      const validatedData = loginSchema.parse(req.body);
+      const user = users.find(u => u.email === validatedData.email);
+      
+      if (!user || !await bcrypt.compare(validatedData.password, user.password)) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+      
+      const token = jwt.sign(
+        { userId: user.id, email: user.email },
+        JWT_SECRET,
+        { expiresIn: '24h' }
+      );
+      
+      // Publish user login event
+      await kafkaClient.sendMessage({
+        topic: 'user-events',
+        key: user.id,
+        value: {
+          eventType: 'user.login',
+          userId: user.id,
+          email: user.email,
+          timestamp: new Date().toISOString(),
+        },
       });
+      
+      logger.info('User logged in successfully', { 
+        service: SERVICE_NAME,
+        userId: user.id,
+        email: user.email 
+      } as any);
+      
+      return res.json({ 
+        message: 'Login successful',
+        token,
+        user: { id: user.id, email: user.email, name: user.name }
+      });
+    } catch (error) {
+      logger.error('Login failed', { 
+        service: SERVICE_NAME,
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      } as any);
+      return res.status(400).json({ error: 'Login failed' });
     }
-
-    const decoded = jwt.verify(token, process.env['JWT_SECRET'] || 'your-secret-key') as any;
-    
-    res.status(200).json({
-      success: true,
-      user: {
-        id: decoded.userId,
-        email: decoded.email,
-        name: decoded.name,
-      },
-    });
-  } catch (error) {
-    logger.error('Token verification failed', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-
-    res.status(401).json({
-      error: 'Invalid token',
-      message: 'Token verification failed',
-    });
-  }
-});
-
-// Error handling middleware
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  logger.error('Unhandled error', {
-    error: err.message,
-    stack: err.stack,
-    url: req.url,
-    method: req.method,
   });
 
-  res.status(500).json({
-    error: 'Internal server error',
-    message: process.env['NODE_ENV'] === 'development' ? err.message : 'Something went wrong',
+  // Start the server
+  const server = app.listen(PORT, () => {
+    logger.info(`${SERVICE_NAME} listening on port ${PORT}`, {
+      service: SERVICE_NAME,
+      port: PORT,
+      metricsPort: METRICS_PORT,
+      environment: process.env['NODE_ENV'] || 'development',
+    } as any);
+    monitoring['tracingManager'].start();
+    metricsServer.start();
+    kafkaClient.connect().then(() => logger.info('Kafka producer connected.')).catch(err => logger.error('Failed to connect Kafka producer', { 
+      service: SERVICE_NAME,
+      error: err.message 
+    } as any));
   });
-});
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({
-    error: 'Not found',
-    message: `Route ${req.method} ${req.originalUrl} not found`,
-  });
-});
-
-// Graceful shutdown
-process.on('SIGTERM', async () => {
-  logger.info('SIGTERM received, shutting down gracefully');
-  
-  try {
+  // Graceful shutdown
+  process.on('SIGTERM', async () => {
+    logger.info('SIGTERM received, shutting down...', { service: SERVICE_NAME } as any);
     await kafkaClient.disconnect();
-    await monitoring.shutdown();
-    process.exit(0);
-  } catch (error) {
-    logger.error('Error during shutdown', {
-      error: error instanceof Error ? error.message : 'Unknown error',
+    metricsServer.stop();
+    server.close(() => {
+      logger.info('Server closed.', { service: SERVICE_NAME } as any);
+      process.exit(0);
     });
-    process.exit(1);
-  }
-});
-
-process.on('SIGINT', async () => {
-  logger.info('SIGINT received, shutting down gracefully');
-  
-  try {
-    await kafkaClient.disconnect();
-    await monitoring.shutdown();
-    process.exit(0);
-  } catch (error) {
-    logger.error('Error during shutdown', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-    process.exit(1);
-  }
-});
-
-// Start server
-async function startServer() {
-  try {
-    // Подключаемся к Kafka
-    await kafkaClient.connect();
-    logger.info('Connected to Kafka');
-
-    // Создаем топик для событий пользователей
-    await kafkaClient.createTopic('user-events', 3, 1);
-    logger.info('Created user-events topic');
-
-    // Запускаем сервер метрик
-    const metricsServer = new MetricsServer(metricsPort);
-    await metricsServer.start();
-    logger.info(`Metrics server started on port ${metricsPort}`);
-
-    // Запускаем основной сервер
-    app.listen(port, () => {
-      logger.info(`Auth service server started on port ${port}`, {
-        port,
-        metricsPort,
-        environment: process.env['NODE_ENV'] || 'development',
-      });
-    });
-  } catch (error) {
-    logger.error('Failed to start server', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-    process.exit(1);
-  }
+  });
 }
 
-startServer();
+bootstrap().catch(err => {
+  logger.fatal('Failed to bootstrap Auth Service', { 
+    service: SERVICE_NAME,
+    error: err.message, 
+    stack: err.stack 
+  } as any);
+  process.exit(1);
+});

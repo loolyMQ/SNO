@@ -5,214 +5,125 @@ import rateLimit from 'express-rate-limit';
 import { Logger, createKafkaClient, defaultKafkaConfig } from '@platform/shared';
 import { createMonitoring, MetricsServer } from '@platform/monitoring';
 
-const app = express();
-const port = process.env['PORT'] || 3001;
-const metricsPort = 9091;
+const SERVICE_NAME = 'api-gateway';
+const PORT = parseInt(process.env['PORT'] || '3001', 10);
+const METRICS_PORT = parseInt(process.env['METRICS_PORT'] || '9091', 10);
 
-// Инициализация логгера
 const logger = new Logger({
-  service: 'api-gateway',
-  environment: process.env['NODE_ENV'] || 'development',
-});
+  service: SERVICE_NAME,
+  environment: (process.env['NODE_ENV'] as 'development' | 'staging' | 'production') || 'development',
+} as any);
 
-// Инициализация мониторинга
 const monitoring = createMonitoring({
-  serviceName: 'api-gateway',
-  serviceVersion: '0.1.0',
-  environment: process.env['NODE_ENV'] || 'development',
+  serviceName: SERVICE_NAME,
+  serviceVersion: '1.0.0',
+  environment: (process.env['NODE_ENV'] as 'development' | 'staging' | 'production') || 'development',
+  metrics: {
+    enabled: true,
+    port: METRICS_PORT,
+    endpoint: '/metrics',
+    collectDefaultMetrics: true,
+  },
+  tracing: {
+    enabled: true,
+    exporter: 'console',
+  },
+  instrumentation: {
+    http: true,
+    express: true,
+    fs: false,
+    dns: false,
+    net: false,
+    pg: false,
+    redis: false,
+  },
 });
+const metricsServer = new MetricsServer(monitoring, METRICS_PORT);
 
-// Инициализация Kafka клиента
 const kafkaClient = createKafkaClient({
   ...defaultKafkaConfig,
-  clientId: 'api-gateway',
+  clientId: `${SERVICE_NAME}-client`,
+  brokers: [process.env['KAFKA_BROKER_URL'] || 'localhost:9092'],
 }, logger);
 
-// Middleware
-app.use(helmet());
-app.use(cors({
-  origin: process.env['FRONTEND_URL'] || 'http://localhost:3000',
-  credentials: true,
-}));
+async function bootstrap() {
+  const app = express();
 
-app.use(rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 минут
-  max: 100, // максимум 100 запросов с одного IP
-  message: 'Too many requests from this IP',
-}));
+  app.use(helmet());
+  app.use(cors());
+  app.use(express.json());
+  // Middleware для метрик будет добавлен позже
 
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
-
-// Мониторинг middleware
-app.use(monitoring.middleware.express);
-
-// Health check endpoint
-app.get('/health', async (req, res) => {
-  try {
-    const healthStatus = await monitoring.health.checkAll();
-    res.status(200).json({
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-      service: 'api-gateway',
-      version: '0.1.0',
-      dependencies: healthStatus,
-    });
-  } catch (error) {
-    logger.error('Health check failed', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-    res.status(503).json({
-      status: 'unhealthy',
-      timestamp: new Date().toISOString(),
-      service: 'api-gateway',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
-
-// API routes
-app.get('/api/status', (req, res) => {
-  res.json({
-    service: 'api-gateway',
-    status: 'running',
-    timestamp: new Date().toISOString(),
-    version: '0.1.0',
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   });
-});
+  app.use(limiter);
 
-// Event publishing endpoint
-app.post('/api/events', async (req, res) => {
-  try {
-    const { topic, event, data } = req.body;
-    
-    if (!topic || !event || !data) {
-      return res.status(400).json({
-        error: 'Missing required fields: topic, event, data',
-      });
+  // Health check endpoint
+  app.get('/health', async (req, res) => {
+    const health = await monitoring.getHealth();
+    res.status(health.status === 'healthy' ? 200 : 503).json(health);
+  });
+
+  // Example route to publish a Kafka event
+  app.post('/events', async (req, res) => {
+    try {
+      const { topic, message } = req.body;
+      if (!topic || !message) {
+        return res.status(400).json({ error: 'Topic and message are required' });
+      }
+      await kafkaClient.sendMessage({ topic, value: message });
+      logger.info('Event published to Kafka', { 
+        service: SERVICE_NAME,
+        topic, 
+        message 
+      } as any);
+      return res.status(200).json({ status: 'Event published' });
+    } catch (error) {
+      logger.error('Failed to publish event to Kafka', { 
+        service: SERVICE_NAME,
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      } as any);
+      return res.status(500).json({ error: 'Failed to publish event' });
     }
-
-    // Отправляем событие в Kafka
-    await kafkaClient.sendMessage({
-      topic,
-      key: data.id || 'api-gateway',
-      value: {
-        event,
-        data,
-        timestamp: new Date().toISOString(),
-        source: 'api-gateway',
-      },
-      headers: {
-        'content-type': 'application/json',
-        'source': 'api-gateway',
-      },
-    });
-
-    logger.info('Event published', {
-      topic,
-      event,
-      dataId: data.id,
-    });
-
-    res.status(200).json({
-      success: true,
-      message: 'Event published successfully',
-      topic,
-      event,
-    });
-  } catch (error) {
-    logger.error('Failed to publish event', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      body: req.body,
-    });
-    
-    res.status(500).json({
-      error: 'Failed to publish event',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
-
-// Error handling middleware
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  logger.error('Unhandled error', {
-    error: err.message,
-    stack: err.stack,
-    url: req.url,
-    method: req.method,
   });
 
-  res.status(500).json({
-    error: 'Internal server error',
-    message: process.env['NODE_ENV'] === 'development' ? err.message : 'Something went wrong',
+  // Start the server
+  const server = app.listen(PORT, () => {
+    logger.info(`${SERVICE_NAME} listening on port ${PORT}`, {
+      service: SERVICE_NAME,
+      port: PORT,
+      metricsPort: METRICS_PORT,
+      environment: process.env['NODE_ENV'] || 'development',
+    } as any);
+    monitoring['tracingManager'].start();
+    metricsServer.start();
+    kafkaClient.connect().then(() => logger.info('Kafka producer connected.')).catch(err => logger.error('Failed to connect Kafka producer', { 
+      service: SERVICE_NAME,
+      error: err.message 
+    } as any));
   });
-});
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({
-    error: 'Not found',
-    message: `Route ${req.method} ${req.originalUrl} not found`,
-  });
-});
-
-// Graceful shutdown
-process.on('SIGTERM', async () => {
-  logger.info('SIGTERM received, shutting down gracefully');
-  
-  try {
+  // Graceful shutdown
+  process.on('SIGTERM', async () => {
+    logger.info('SIGTERM received, shutting down...', { service: SERVICE_NAME } as any);
     await kafkaClient.disconnect();
-    await monitoring.shutdown();
-    process.exit(0);
-  } catch (error) {
-    logger.error('Error during shutdown', {
-      error: error instanceof Error ? error.message : 'Unknown error',
+    metricsServer.stop();
+    server.close(() => {
+      logger.info('Server closed.', { service: SERVICE_NAME } as any);
+      process.exit(0);
     });
-    process.exit(1);
-  }
-});
-
-process.on('SIGINT', async () => {
-  logger.info('SIGINT received, shutting down gracefully');
-  
-  try {
-    await kafkaClient.disconnect();
-    await monitoring.shutdown();
-    process.exit(0);
-  } catch (error) {
-    logger.error('Error during shutdown', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-    process.exit(1);
-  }
-});
-
-// Start server
-async function startServer() {
-  try {
-    // Подключаемся к Kafka
-    await kafkaClient.connect();
-    logger.info('Connected to Kafka');
-
-    // Запускаем сервер метрик
-    const metricsServer = new MetricsServer(metricsPort);
-    await metricsServer.start();
-    logger.info(`Metrics server started on port ${metricsPort}`);
-
-    // Запускаем основной сервер
-    app.listen(port, () => {
-      logger.info(`API Gateway server started on port ${port}`, {
-        port,
-        metricsPort,
-        environment: process.env['NODE_ENV'] || 'development',
-      });
-    });
-  } catch (error) {
-    logger.error('Failed to start server', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-    process.exit(1);
-  }
+  });
 }
 
-startServer();
+bootstrap().catch(err => {
+  logger.fatal('Failed to bootstrap API Gateway', { 
+    service: SERVICE_NAME,
+    error: err.message, 
+    stack: err.stack 
+  } as any);
+  process.exit(1);
+});
