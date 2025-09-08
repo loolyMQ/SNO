@@ -2,13 +2,23 @@
   "name": "jobs-service",
   "version": "0.1.0",
   "private": true,
+  "dependencies": {
+    "@platform/shared": "workspace:*",
+    "@platform/monitoring": "workspace:*",
+    "express": "^4.21.2",
+    "bullmq": "^4.15.4",
+    "ioredis": "^5.3.2",
+    "zod": "^3.22.4"
+  },
   "devDependencies": {
+    "@types/express": "^4.17.23",
     "typescript": "^5.5.4"
   },
   "scripts": {
-    "dev": "node --watch src/index.js || echo ts-node later",
+    "dev": "ts-node src/index.ts",
     "build": "tsc -p tsconfig.json",
-    "lint": "echo lint",
-    "test": "echo test"
+    "start": "node dist/index.js",
+    "lint": "eslint src/**/*.ts",
+    "test": "jest"
   }
 }
