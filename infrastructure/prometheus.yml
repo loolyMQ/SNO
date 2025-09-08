@@ -56,10 +56,12 @@ scrape_configs:
     static_configs:
       - targets: ["redis:6379"]
 
-  - job_name: 'rabbitmq'
+  - job_name: 'kafka'
     static_configs:
-      - targets: ["rabbitmq:15672"]
+      - targets: ["kafka:9101"]
     metrics_path: '/metrics'
+    scrape_interval: '15s'
+    scrape_timeout: '10s'
 
   - job_name: 'meilisearch'
     static_configs:
