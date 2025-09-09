@@ -4,6 +4,7 @@ import { createMonitoring, MetricsServer } from '@platform/monitoring';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
+import prisma from './prisma';
 
 const SERVICE_NAME = 'auth-service';
 const PORT = parseInt(process.env['PORT'] || '3002', 10);
@@ -47,8 +48,7 @@ const kafkaClient = createKafkaClient({
   brokers: [process.env['KAFKA_BROKER_URL'] || 'localhost:9092'],
 }, logger);
 
-// Mock database
-const users: any[] = [];
+// Prisma database client is imported above
 
 // Validation schemas
 const registerSchema = z.object({
@@ -79,15 +79,13 @@ async function bootstrap() {
       const validatedData = registerSchema.parse(req.body);
       const hashedPassword = await bcrypt.hash(validatedData.password, 10);
       
-      const user = {
-        id: Date.now().toString(),
-        email: validatedData.email,
-        name: validatedData.name,
-        password: hashedPassword,
-        createdAt: new Date().toISOString(),
-      };
-      
-      users.push(user);
+      const user = await prisma.user.create({
+        data: {
+          email: validatedData.email,
+          name: validatedData.name,
+          password: hashedPassword,
+        },
+      });
       
       // Publish user created event
       await kafkaClient.sendMessage({
@@ -108,7 +106,7 @@ async function bootstrap() {
         email: user.email 
       } as any);
       
-      res.status(201).json({ 
+      return res.status(201).json({ 
         message: 'User registered successfully',
         user: { id: user.id, email: user.email, name: user.name }
       });
@@ -117,7 +115,7 @@ async function bootstrap() {
         service: SERVICE_NAME,
         error: error instanceof Error ? error.message : 'Unknown error' 
       } as any);
-      res.status(400).json({ error: 'Registration failed' });
+      return res.status(400).json({ error: 'Registration failed' });
     }
   });
 
@@ -125,7 +123,9 @@ async function bootstrap() {
   app.post('/login', async (req, res) => {
     try {
       const validatedData = loginSchema.parse(req.body);
-      const user = users.find(u => u.email === validatedData.email);
+      const user = await prisma.user.findUnique({
+        where: { email: validatedData.email },
+      });
       
       if (!user || !await bcrypt.compare(validatedData.password, user.password)) {
         return res.status(401).json({ error: 'Invalid credentials' });
@@ -189,6 +189,7 @@ async function bootstrap() {
   process.on('SIGTERM', async () => {
     logger.info('SIGTERM received, shutting down...', { service: SERVICE_NAME } as any);
     await kafkaClient.disconnect();
+    await prisma.$disconnect();
     metricsServer.stop();
     server.close(() => {
       logger.info('Server closed.', { service: SERVICE_NAME } as any);

@@ -4,6 +4,7 @@ import { createMonitoring, MetricsServer } from '@platform/monitoring';
 import { Queue, Worker, Job } from 'bullmq';
 import IORedis from 'ioredis';
 import { z } from 'zod';
+import prisma from './prisma';
 
 const SERVICE_NAME = 'jobs-service';
 const PORT = parseInt(process.env['PORT'] || '3004', 10);
@@ -70,6 +71,24 @@ const dataProcessingJobSchema = z.object({
   operation: z.enum(['analyze', 'transform', 'validate']),
   parameters: z.record(z.any()).optional(),
 });
+
+// Helper function to create job in database
+async function createJobInDatabase(
+  name: string,
+  type: 'EMAIL_SEND' | 'DATA_PROCESSING' | 'REPORT_GENERATION' | 'CLEANUP' | 'BACKUP' | 'SYNC' | 'CUSTOM',
+  data: any,
+  priority: number = 0
+) {
+  return await prisma.job.create({
+    data: {
+      name,
+      type,
+      data,
+      priority,
+      status: 'PENDING',
+    },
+  });
+}
 
 // Workers
 const emailWorker = new Worker('email-queue', async (job: Job) => {
@@ -141,20 +160,47 @@ async function bootstrap() {
     try {
       const validatedData = emailJobSchema.parse(req.body);
       
-      const job = await emailQueue.add('send-email', {
+      // Create job in database
+      const dbJob = await createJobInDatabase(
+        'Send Email',
+        'EMAIL_SEND',
+        {
+          to: validatedData.to,
+          subject: validatedData.subject,
+          body: validatedData.body,
+        },
+        validatedData.priority || 5
+      );
+      
+      // Add to BullMQ queue
+      const queueJob = await emailQueue.add('send-email', {
+        dbJobId: dbJob.id,
         to: validatedData.to,
         subject: validatedData.subject,
         body: validatedData.body,
         priority: validatedData.priority || 5,
       });
       
+      // Update database job with queue job ID
+      await prisma.job.update({
+        where: { id: dbJob.id },
+        data: { 
+          status: 'ACTIVE',
+          data: {
+            ...dbJob.data as any,
+            queueJobId: queueJob.id,
+          }
+        },
+      });
+      
       // Publish job created event
       await kafkaClient.sendMessage({
         topic: 'job-events',
-        key: job.id?.toString(),
+        key: dbJob.id,
         value: {
           eventType: 'job.created',
-          jobId: job.id,
+          jobId: dbJob.id,
+          queueJobId: queueJob.id,
           jobType: 'email',
           status: 'queued',
           timestamp: new Date().toISOString(),
@@ -163,13 +209,15 @@ async function bootstrap() {
       
       logger.info('Email job created', { 
         service: SERVICE_NAME,
-        jobId: job.id,
+        jobId: dbJob.id,
+        queueJobId: queueJob.id,
         to: validatedData.to 
       } as any);
       
       return res.status(201).json({ 
         message: 'Email job created successfully',
-        jobId: job.id 
+        jobId: dbJob.id,
+        queueJobId: queueJob.id
       });
     } catch (error) {
       logger.error('Failed to create email job', { 
@@ -185,19 +233,46 @@ async function bootstrap() {
     try {
       const validatedData = dataProcessingJobSchema.parse(req.body);
       
-      const job = await dataProcessingQueue.add('process-data', {
+      // Create job in database
+      const dbJob = await createJobInDatabase(
+        'Data Processing',
+        'DATA_PROCESSING',
+        {
+          dataId: validatedData.dataId,
+          operation: validatedData.operation,
+          parameters: validatedData.parameters || {},
+        },
+        5
+      );
+      
+      // Add to BullMQ queue
+      const queueJob = await dataProcessingQueue.add('process-data', {
+        dbJobId: dbJob.id,
         dataId: validatedData.dataId,
         operation: validatedData.operation,
         parameters: validatedData.parameters || {},
       });
       
+      // Update database job with queue job ID
+      await prisma.job.update({
+        where: { id: dbJob.id },
+        data: { 
+          status: 'ACTIVE',
+          data: {
+            ...dbJob.data as any,
+            queueJobId: queueJob.id,
+          }
+        },
+      });
+      
       // Publish job created event
       await kafkaClient.sendMessage({
         topic: 'job-events',
-        key: job.id?.toString(),
+        key: dbJob.id,
         value: {
           eventType: 'job.created',
-          jobId: job.id,
+          jobId: dbJob.id,
+          queueJobId: queueJob.id,
           jobType: 'data-processing',
           operation: validatedData.operation,
           status: 'queued',
@@ -207,13 +282,15 @@ async function bootstrap() {
       
       logger.info('Data processing job created', { 
         service: SERVICE_NAME,
-        jobId: job.id,
+        jobId: dbJob.id,
+        queueJobId: queueJob.id,
         operation: validatedData.operation 
       } as any);
       
       return res.status(201).json({ 
         message: 'Data processing job created successfully',
-        jobId: job.id 
+        jobId: dbJob.id,
+        queueJobId: queueJob.id
       });
     } catch (error) {
       logger.error('Failed to create data processing job', { 
@@ -229,23 +306,50 @@ async function bootstrap() {
     try {
       const { jobId } = req.params;
       
-      // Check both queues for the job
-      const emailJob = await emailQueue.getJob(jobId);
-      const dataJob = await dataProcessingQueue.getJob(jobId);
+      // Get job from database
+      const dbJob = await prisma.job.findUnique({
+        where: { id: jobId },
+        include: { logs: true },
+      });
       
-      const job = emailJob || dataJob;
-      
-      if (!job) {
+      if (!dbJob) {
         return res.status(404).json({ error: 'Job not found' });
       }
       
+      // Get queue job status if available
+      let queueJobStatus = null;
+      if (dbJob.data && (dbJob.data as any).queueJobId) {
+        const queueJobId = (dbJob.data as any).queueJobId;
+        const emailJob = await emailQueue.getJob(queueJobId);
+        const dataJob = await dataProcessingQueue.getJob(queueJobId);
+        const queueJob = emailJob || dataJob;
+        
+        if (queueJob) {
+          queueJobStatus = {
+            status: await queueJob.getState(),
+            progress: queueJob.progress,
+            result: queueJob.returnvalue,
+          };
+        }
+      }
+      
       return res.json({
-        jobId: job.id,
-        status: await job.getState(),
-        progress: job.progress,
-        data: job.data,
-        result: job.returnvalue,
-        createdAt: job.timestamp,
+        jobId: dbJob.id,
+        name: dbJob.name,
+        type: dbJob.type,
+        status: dbJob.status,
+        priority: dbJob.priority,
+        data: dbJob.data,
+        result: dbJob.result,
+        error: dbJob.error,
+        attempts: dbJob.attempts,
+        maxAttempts: dbJob.maxAttempts,
+        createdAt: dbJob.createdAt,
+        updatedAt: dbJob.updatedAt,
+        startedAt: dbJob.startedAt,
+        completedAt: dbJob.completedAt,
+        logs: dbJob.logs,
+        queueStatus: queueJobStatus,
       });
     } catch (error) {
       logger.error('Failed to get job status', { 
@@ -279,6 +383,7 @@ async function bootstrap() {
     await emailQueue.close();
     await dataProcessingQueue.close();
     await connection.disconnect();
+    await prisma.$disconnect();
     metricsServer.stop();
     server.close(() => {
       logger.info('Server closed.', { service: SERVICE_NAME } as any);

@@ -1,0 +1,69 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ApiKey {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  name        String
+  description String?
+  permissions Json     @default("[]")
+  isActive    Boolean  @default(true)
+  expiresAt   DateTime?
+  lastUsedAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  requests    Request[]
+
+  @@map("api_keys")
+}
+
+model Request {
+  id        String   @id @default(cuid())
+  apiKeyId  String?
+  method    String
+  path      String
+  status    Int
+  duration  Int
+  userAgent String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  // Relations
+  apiKey    ApiKey?  @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
+
+  @@map("requests")
+}
+
+model RateLimit {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  count     Int      @default(0)
+  resetAt   DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("rate_limits")
+}
+
+model ServiceHealth {
+  id          String   @id @default(cuid())
+  serviceName String
+  status      String
+  responseTime Int?
+  lastChecked DateTime @default(now())
+  error       String?
+  metadata    Json?
+
+  @@map("service_health")
+}
