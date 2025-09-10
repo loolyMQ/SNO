@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест интерактивного графа - Карта науки</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #f8fafc;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .control-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary { background: #3b82f6; color: white; }
+        .btn-success { background: #10b981; color: white; }
+        .btn-warning { background: #f59e0b; color: white; }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-secondary { background: #6b7280; color: white; }
+        
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .metric {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .metric-label {
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 5px;
+        }
+        
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1e293b;
+        }
+        
+        .graph-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        #graph-canvas {
+            width: 100%;
+            height: 600px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: grab;
+        }
+        
+        #graph-canvas:active {
+            cursor: grabbing;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        
+        .status.success { background: #dcfce7; color: #166534; }
+        .status.error { background: #fef2f2; color: #dc2626; }
+        .status.info { background: #eff6ff; color: #2563eb; }
+        
+        .instructions {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .instructions h3 {
+            margin: 0 0 15px 0;
+            color: #1e293b;
+        }
+        
+        .instructions ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #64748b;
+        }
+        
+        .instructions li {
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Тест интерактивного графа "Карта науки"</h1>
+            <p>Настоящий граф с физикой и динамическим FPS</p>
+        </div>
+        
+        <!-- Панель управления -->
+        <div class="controls">
+            <h3 style="margin: 0 0 15px 0; color: #1e293b;">Управление тестами</h3>
+            
+            <div class="control-group">
+                <button class="btn btn-success" onclick="loadGraph(50)">50 узлов</button>
+                <button class="btn btn-success" onclick="loadGraph(100)">100 узлов</button>
+                <button class="btn btn-warning" onclick="loadGraph(200)">200 узлов</button>
+                <button class="btn btn-warning" onclick="loadGraph(500)">500 узлов</button>
+                <button class="btn btn-danger" onclick="loadGraph(1000)">1000 узлов</button>
+            </div>
+            
+            <div class="control-group">
+                <button class="btn btn-primary" onclick="setAlgorithm('fruchterman-reingold')">Фрухтерман-Рейнгольд</button>
+                <button class="btn btn-primary" onclick="setAlgorithm('openord')">OpenOrd</button>
+                <button class="btn btn-primary" onclick="setAlgorithm('hybrid')">Гибридный</button>
+            </div>
+            
+            <div class="control-group">
+                <button class="btn btn-secondary" onclick="togglePhysics()">Пауза/Старт</button>
+                <button class="btn btn-secondary" onclick="resetGraph()">Сброс</button>
+                <button class="btn btn-secondary" onclick="heatUp()">Нагреть</button>
+                <button class="btn btn-secondary" onclick="runStressTest()">Стресс-тест</button>
+            </div>
+            
+            <div class="control-group">
+                <button class="btn btn-primary" onclick="changeNodeColors('black')">Черные</button>
+                <button class="btn btn-primary" onclick="changeNodeColors('random')">Случайные</button>
+                <button class="btn btn-primary" onclick="changeNodeColors('gradient')">Градиент</button>
+                <button class="btn btn-primary" onclick="changeNodeColors('type')">По типу</button>
+            </div>
+            
+            <!-- Метрики в реальном времени -->
+            <div class="metrics">
+                <div class="metric">
+                    <div class="metric-label">FPS</div>
+                    <div class="metric-value" id="fps">0</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Узлы</div>
+                    <div class="metric-value" id="nodes">0</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Связи</div>
+                    <div class="metric-value" id="edges">0</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Алгоритм</div>
+                    <div class="metric-value" id="algorithm">-</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Температура</div>
+                    <div class="metric-value" id="temperature">0</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Фаза</div>
+                    <div class="metric-value" id="phase">-</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Граф -->
+        <div class="graph-container">
+            <canvas id="graph-canvas" width="1200" height="600"></canvas>
+        </div>
+        
+        <!-- Статус -->
+        <div id="status"></div>
+        
+        <!-- Инструкции -->
+        <div class="instructions">
+            <h3>Как тестировать</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                <div>
+                    <h4 style="color: #3b82f6; margin: 0 0 10px 0;">Интерактивность</h4>
+                    <ul>
+                        <li><strong>Drag:</strong> Зажмите и перетащите узел</li>
+                        <li><strong>Zoom:</strong> Колесико мыши</li>
+                        <li><strong>Pan:</strong> Перетащите пустое место</li>
+                        <li><strong>Hover:</strong> Наведите на узел</li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 style="color: #10b981; margin: 0 0 10px 0;">Производительность</h4>
+                    <ul>
+                        <li><strong>FPS:</strong> Должен быть 30+</li>
+                        <li><strong>Отзывчивость:</strong> Мгновенный отклик</li>
+                        <li><strong>Плавность:</strong> Без рывков</li>
+                        <li><strong>Стабильность:</strong> Без дрожания</li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 style="color: #f59e0b; margin: 0 0 10px 0;">Алгоритмы</h4>
+                    <ul>
+                        <li><strong>Фрухтерман-Рейнгольд:</strong> До 100 узлов</li>
+                        <li><strong>OpenOrd:</strong> 100+ узлов</li>
+                        <li><strong>Гибридный:</strong> Автоматический выбор</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Глобальные переменные
+        let canvas, ctx;
+        let nodes = [];
+        let edges = [];
+        let positions = new Map();
+        let velocities = new Map();
+        let pinned = new Set();
+        let isPhysicsRunning = true;
+        let currentAlgorithm = 'fruchterman-reingold';
+        let temperature = 100;
+        let phase = 'liquid';
+        let lastTime = 0;
+        let frameCount = 0;
+        let fps = 0;
+        let lastFpsUpdate = 0;
+        
+        // Настройки физики
+        const physicsConfig = {
+            damping: 0.9,
+            gravity: 0.01,
+            maxVelocity: 400,
+            area: 10000,
+            initialTemperature: 200,
+            coolingRate: 0.98,
+            minTemperature: 5,
+            maxDisplacement: 50,
+            springLength: 150, // Оптимальное расстояние между узлами
+            maxLinkLength: 2.5 // Максимальная длина связи (множитель от springLength)
+        };
+        
+        // Инициализация
+        function init() {
+            canvas = document.getElementById('graph-canvas');
+            ctx = canvas.getContext('2d');
+            
+            // Обработчики событий
+            canvas.addEventListener('mousedown', handleMouseDown);
+            canvas.addEventListener('mousemove', handleMouseMove);
+            canvas.addEventListener('mouseup', handleMouseUp);
+            canvas.addEventListener('wheel', handleWheel);
+            
+            // Обновление позиции мыши для отладки
+            canvas.addEventListener('mousemove', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                mousePos.x = (e.clientX - rect.left) * scaleX;
+                mousePos.y = (e.clientY - rect.top) * scaleY;
+            });
+            
+            // Запуск анимации
+            requestAnimationFrame(animate);
+            
+            showStatus('Система готова! Загрузите граф для тестирования', 'info');
+        }
+        
+        // Генерация тестовых данных
+        function generateTestData(nodeCount) {
+            const newNodes = [];
+            const newEdges = [];
+            
+            // Создаем узлы
+            for (let i = 0; i < nodeCount; i++) {
+                const isCategory = i < Math.floor(nodeCount * 0.2);
+                newNodes.push({
+                    id: `node_${i}`,
+                    label: isCategory ? `Категория ${i + 1}` : `Сообщество ${i + 1}`,
+                    type: isCategory ? 'category' : 'community',
+                    size: isCategory ? 50 : 35, // Уменьшили размеры
+                    color: '#000000' // Все узлы черные по умолчанию
+                });
+            }
+            
+            // Создаем связи
+            const categories = newNodes.filter(n => n.type === 'category');
+            const communities = newNodes.filter(n => n.type === 'community');
+            
+            // Связываем сообщества с категориями
+            communities.forEach((community, index) => {
+                const category = categories[index % categories.length];
+                newEdges.push({
+                    id: `edge_${community.id}_${category.id}`,
+                    source: category.id,
+                    target: community.id,
+                    type: 'category-community',
+                    isMain: index % 3 === 0
+                });
+            });
+            
+            // Связываем некоторые сообщества между собой
+            for (let i = 0; i < communities.length - 1; i += 2) {
+                if (Math.random() > 0.7) {
+                    newEdges.push({
+                        id: `edge_${communities[i].id}_${communities[i + 1].id}`,
+                        source: communities[i].id,
+                        target: communities[i + 1].id,
+                        type: 'community-community'
+                    });
+                }
+            }
+            
+            return { nodes: newNodes, edges: newEdges };
+        }
+        
+        // Загрузка графа
+        function loadGraph(nodeCount) {
+            const data = generateTestData(nodeCount);
+            nodes = data.nodes;
+            edges = data.edges;
+            
+            // Инициализация позиций
+            positions.clear();
+            velocities.clear();
+            pinned.clear();
+            
+            nodes.forEach(node => {
+                positions.set(node.id, {
+                    x: (Math.random() - 0.5) * 1000,
+                    y: (Math.random() - 0.5) * 1000
+                });
+                velocities.set(node.id, { vx: 0, vy: 0 });
+            });
+            
+            // Сброс физики
+            temperature = physicsConfig.initialTemperature;
+            phase = 'liquid';
+            
+            updateMetrics();
+            showStatus(`Граф с ${nodeCount} узлами загружен`, 'success');
+        }
+        
+        // Установка алгоритма
+        function setAlgorithm(algorithm) {
+            currentAlgorithm = algorithm;
+            updateMetrics();
+            showStatus(`Алгоритм изменен на: ${algorithm}`, 'info');
+        }
+        
+        // Переключение физики
+        function togglePhysics() {
+            isPhysicsRunning = !isPhysicsRunning;
+            showStatus(isPhysicsRunning ? 'Физика запущена' : 'Физика приостановлена', 'info');
+        }
+        
+        // Сброс графа
+        function resetGraph() {
+            if (nodes.length === 0) return;
+            
+            nodes.forEach(node => {
+                positions.set(node.id, {
+                    x: (Math.random() - 0.5) * 1000,
+                    y: (Math.random() - 0.5) * 1000
+                });
+                velocities.set(node.id, { vx: 0, vy: 0 });
+            });
+            
+            pinned.clear();
+            temperature = physicsConfig.initialTemperature;
+            phase = 'liquid';
+            
+            showStatus('Граф сброшен', 'info');
+        }
+        
+        // Нагрев системы
+        function heatUp() {
+            temperature = physicsConfig.initialTemperature;
+            phase = 'liquid';
+            
+            // Добавляем случайные импульсы
+            nodes.forEach(node => {
+                const vel = velocities.get(node.id);
+                if (vel) {
+                    vel.vx += (Math.random() - 0.5) * 100;
+                    vel.vy += (Math.random() - 0.5) * 100;
+                }
+            });
+            
+            showStatus('Система нагрета!', 'info');
+        }
+        
+        // Изменение цветов узлов
+        function changeNodeColors(mode) {
+            if (nodes.length === 0) return;
+            
+            nodes.forEach((node, index) => {
+                switch (mode) {
+                    case 'black':
+                        node.color = '#000000';
+                        break;
+                    case 'random':
+                        node.color = `hsl(${Math.random() * 360}, 70%, 50%)`;
+                        break;
+                    case 'gradient':
+                        const hue = (index / nodes.length) * 360;
+                        node.color = `hsl(${hue}, 70%, 50%)`;
+                        break;
+                    case 'type':
+                        if (node.type === 'category') {
+                            node.color = '#3b82f6'; // Синий для категорий
+                        } else {
+                            node.color = '#10b981'; // Зеленый для сообществ
+                        }
+                        break;
+                }
+            });
+            
+            showStatus(`Цвета узлов изменены: ${mode}`, 'info');
+        }
+        
+        // Стресс-тест
+        function runStressTest() {
+            const tests = [50, 100, 200, 500, 1000];
+            let currentTest = 0;
+            
+            const runNextTest = () => {
+                if (currentTest < tests.length) {
+                    loadGraph(tests[currentTest]);
+                    currentTest++;
+                    setTimeout(runNextTest, 5000);
+                } else {
+                    showStatus('Стресс-тест завершен!', 'success');
+                }
+            };
+            
+            runNextTest();
+        }
+        
+        // Физическая симуляция
+        function simulatePhysics(deltaTime) {
+            if (!isPhysicsRunning) return;
+            
+            const currentPositions = new Map(positions);
+            const currentVelocities = new Map(velocities);
+            
+            // Выбор алгоритма
+            switch (currentAlgorithm) {
+                case 'fruchterman-reingold':
+                    simulateFruchtermanReingold(currentPositions, currentVelocities, deltaTime);
+                    break;
+                case 'openord':
+                    simulateOpenOrd(currentPositions, currentVelocities, deltaTime);
+                    break;
+                case 'hybrid':
+                    if (nodes.length > 100) {
+                        simulateOpenOrd(currentPositions, currentVelocities, deltaTime);
+                    } else {
+                        simulateFruchtermanReingold(currentPositions, currentVelocities, deltaTime);
+                    }
+                    break;
+            }
+            
+            // Обновление позиций
+            positions = currentPositions;
+            velocities = currentVelocities;
+        }
+        
+        // Фрухтерман-Рейнгольд
+        function simulateFruchtermanReingold(currentPositions, currentVelocities, deltaTime) {
+            const k = physicsConfig.springLength || Math.sqrt(physicsConfig.area / nodes.length);
+            
+            // Отталкивание
+            for (let i = 0; i < nodes.length; i++) {
+                const nodeA = nodes[i];
+                const posA = currentPositions.get(nodeA.id);
+                if (!posA) continue;
+                
+                for (let j = i + 1; j < nodes.length; j++) {
+                    const nodeB = nodes[j];
+                    const posB = currentPositions.get(nodeB.id);
+                    if (!posB) continue;
+                    
+                    const dx = posB.x - posA.x;
+                    const dy = posB.y - posA.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy) || 0.0001;
+                    
+                    // Усиленное отталкивание для предотвращения наложения
+                    const minDistance = (nodeA.size + nodeB.size) / 2 + 20; // Минимальное расстояние
+                    const effectiveDistance = Math.max(distance, minDistance);
+                    
+                    const force = (k * k) / effectiveDistance * 5.0 * temperature / 100; // Увеличиваем базовое отталкивание
+                    const fx = (dx / distance) * force;
+                    const fy = (dy / distance) * force;
+                    
+                    const velA = currentVelocities.get(nodeA.id);
+                    const velB = currentVelocities.get(nodeB.id);
+                    
+                    // Усиливаем отталкивание для перетаскиваемых узлов
+                    const isDraggingA = pinned.has(nodeA.id);
+                    const isDraggingB = pinned.has(nodeB.id);
+                    const dragMultiplier = (isDraggingA || isDraggingB) ? 4.0 : 1.0;
+                    
+                    if (!isDraggingA) {
+                        velA.vx -= fx * deltaTime * dragMultiplier;
+                        velA.vy -= fy * deltaTime * dragMultiplier;
+                    }
+                    if (!isDraggingB) {
+                        velB.vx += fx * deltaTime * dragMultiplier;
+                        velB.vy += fy * deltaTime * dragMultiplier;
+                    }
+                }
+            }
+            
+            // Притяжение
+            edges.forEach(edge => {
+                const posA = currentPositions.get(edge.source);
+                const posB = currentPositions.get(edge.target);
+                if (!posA || !posB) return;
+                
+                const dx = posB.x - posA.x;
+                const dy = posB.y - posA.y;
+                const distance = Math.sqrt(dx * dx + dy * dy) || 0.0001;
+                
+                // Притяжение с ограничением максимальной длины
+                const maxLinkLength = k * physicsConfig.maxLinkLength; // Максимальная длина связи
+                const effectiveDistance = Math.min(distance, maxLinkLength);
+                
+                // Усиливаем притяжение при перетаскивании
+                const isDraggingSource = pinned.has(edge.source);
+                const isDraggingTarget = pinned.has(edge.target);
+                const isDragging = isDraggingSource || isDraggingTarget;
+                
+                let force = (effectiveDistance * effectiveDistance) / k * 0.1;
+                if (isDragging) {
+                    // При перетаскивании используем более сильную формулу притяжения
+                    force = (distance * distance) / k * 0.3; // Усиливаем в 3 раза
+                }
+                
+                const fx = (dx / distance) * force;
+                const fy = (dy / distance) * force;
+                
+                const velA = currentVelocities.get(edge.source);
+                const velB = currentVelocities.get(edge.target);
+                
+                // Усиливаем притяжение для связанных узлов при перетаскивании
+                const attractionMultiplier = isDragging ? 8.0 : 1.0;
+                
+                if (!isDraggingSource) {
+                    velA.vx += fx * deltaTime * attractionMultiplier;
+                    velA.vy += fy * deltaTime * attractionMultiplier;
+                }
+                if (!isDraggingTarget) {
+                    velB.vx -= fx * deltaTime * attractionMultiplier;
+                    velB.vy -= fy * deltaTime * attractionMultiplier;
+                }
+            });
+            
+            // Гравитация к центру
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            
+            nodes.forEach(node => {
+                const pos = currentPositions.get(node.id);
+                const vel = currentVelocities.get(node.id);
+                if (!pos || !vel || pinned.has(node.id)) return;
+                
+                const dx = centerX - pos.x;
+                const dy = centerY - pos.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance > 100) {
+                    const gravityForce = physicsConfig.gravity * (distance - 100) / distance;
+                    vel.vx += dx * gravityForce;
+                    vel.vy += dy * gravityForce;
+                }
+            });
+            
+            // Охлаждение
+            temperature *= physicsConfig.coolingRate;
+            temperature = Math.max(temperature, physicsConfig.minTemperature);
+            
+            // Затухание и ограничение скорости
+            currentVelocities.forEach(vel => {
+                // Затухание
+                vel.vx *= physicsConfig.damping;
+                vel.vy *= physicsConfig.damping;
+                
+                // Ограничение скорости
+                const speed = Math.sqrt(vel.vx * vel.vx + vel.vy * vel.vy);
+                if (speed > physicsConfig.maxVelocity) {
+                    const scale = physicsConfig.maxVelocity / speed;
+                    vel.vx *= scale;
+                    vel.vy *= scale;
+                }
+            });
+            
+            // Проверка и разрешение коллизий
+            for (let i = 0; i < nodes.length; i++) {
+                const nodeA = nodes[i];
+                const posA = currentPositions.get(nodeA.id);
+                if (!posA) continue;
+                
+                for (let j = i + 1; j < nodes.length; j++) {
+                    const nodeB = nodes[j];
+                    const posB = currentPositions.get(nodeB.id);
+                    if (!posB) continue;
+                    
+                    const dx = posB.x - posA.x;
+                    const dy = posB.y - posA.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const minDistance = (nodeA.size + nodeB.size) / 2 + 10;
+                    
+                    if (distance < minDistance) {
+                        // Разделяем перекрывающиеся узлы
+                        const overlap = minDistance - distance;
+                        const separationX = (dx / distance) * overlap * 0.5;
+                        const separationY = (dy / distance) * overlap * 0.5;
+                        
+                        if (!pinned.has(nodeA.id)) {
+                            posA.x -= separationX;
+                            posA.y -= separationY;
+                        }
+                        if (!pinned.has(nodeB.id)) {
+                            posB.x += separationX;
+                            posB.y += separationY;
+                        }
+                    }
+                }
+            }
+            
+            // Обновление позиций
+            nodes.forEach(node => {
+                const pos = currentPositions.get(node.id);
+                const vel = currentVelocities.get(node.id);
+                if (!pos || !vel || pinned.has(node.id)) return;
+                
+                pos.x += vel.vx * deltaTime;
+                pos.y += vel.vy * deltaTime;
+            });
+        }
+        
+        // OpenOrd (упрощенная версия)
+        function simulateOpenOrd(currentPositions, currentVelocities, deltaTime) {
+            // Упрощенная версия OpenOrd
+            simulateFruchtermanReingold(currentPositions, currentVelocities, deltaTime);
+            
+            // Обновление фазы на основе температуры
+            const maxTemp = physicsConfig.initialTemperature;
+            const tempRatio = temperature / maxTemp;
+            
+            if (tempRatio > 0.75) phase = 'liquid';        // 25% времени
+            else if (tempRatio > 0.45) phase = 'expansion'; // 30% времени (80% - 50%)
+            else if (tempRatio > 0.20) phase = 'cooldown';  // 25% времени
+            else if (tempRatio > 0.10) phase = 'crunch';    // 10% времени
+            else phase = 'simmer';                          // 15% времени
+        }
+        
+        // Обработчики событий
+        let isDragging = false;
+        let dragNode = null;
+        let lastMousePos = { x: 0, y: 0 };
+        let mousePos = { x: 0, y: 0 };
+        
+        function handleMouseDown(e) {
+            const rect = canvas.getBoundingClientRect();
+            // Правильный расчет координат с учетом масштабирования Canvas
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const x = (e.clientX - rect.left) * scaleX;
+            const y = (e.clientY - rect.top) * scaleY;
+            mousePos = { x, y };
+            
+            // Поиск узла под курсором
+            for (const node of nodes) {
+                const pos = positions.get(node.id);
+                if (!pos) continue;
+                
+                const dx = x - pos.x;
+                const dy = y - pos.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < node.size / 2) { // Используем радиус, а не диаметр
+                    isDragging = true;
+                    dragNode = node.id;
+                    pinned.add(node.id);
+                    lastMousePos = { x, y };
+                    break;
+                }
+            }
+        }
+        
+        function handleMouseMove(e) {
+            if (!isDragging || !dragNode) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            // Правильный расчет координат с учетом масштабирования Canvas
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const x = (e.clientX - rect.left) * scaleX;
+            const y = (e.clientY - rect.top) * scaleY;
+            
+            const pos = positions.get(dragNode);
+            if (pos) {
+                pos.x = x;
+                pos.y = y;
+            }
+        }
+        
+        function handleMouseUp(e) {
+            if (isDragging && dragNode) {
+                pinned.delete(dragNode);
+                isDragging = false;
+                dragNode = null;
+            }
+        }
+        
+        function handleWheel(e) {
+            e.preventDefault();
+            // Простое масштабирование
+            const scale = e.deltaY > 0 ? 0.9 : 1.1;
+            // Здесь можно добавить логику масштабирования
+        }
+        
+        // Рендеринг
+        function render() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Рисуем связи
+            edges.forEach(edge => {
+                const posA = positions.get(edge.source);
+                const posB = positions.get(edge.target);
+                if (!posA || !posB) return;
+                
+                const isDragging = pinned.has(edge.source) || pinned.has(edge.target);
+                
+                // Настройки связи
+                ctx.strokeStyle = isDragging ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 0.4)';
+                ctx.lineWidth = isDragging ? 2 : 1;
+                ctx.lineCap = 'round';
+                
+                // Рисуем связь
+                ctx.beginPath();
+                ctx.moveTo(posA.x, posA.y);
+                ctx.lineTo(posB.x, posB.y);
+                ctx.stroke();
+                
+                // Добавляем градиент для активных связей
+                if (isDragging) {
+                    const gradient = ctx.createLinearGradient(posA.x, posA.y, posB.x, posB.y);
+                    gradient.addColorStop(0, 'rgba(255, 255, 255, 0.6)');
+                    gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.9)');
+                    gradient.addColorStop(1, 'rgba(255, 255, 255, 0.6)');
+                    
+                    ctx.strokeStyle = gradient;
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(posA.x, posA.y);
+                    ctx.lineTo(posB.x, posB.y);
+                    ctx.stroke();
+                }
+            });
+            
+            // Рисуем узлы
+            nodes.forEach(node => {
+                const pos = positions.get(node.id);
+                if (!pos) return;
+                
+                const radius = node.size / 2;
+                const isDragging = pinned.has(node.id);
+                
+                // Основной круг
+                ctx.fillStyle = node.color;
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Обводка
+                ctx.strokeStyle = isDragging ? '#ffffff' : '#333333';
+                ctx.lineWidth = isDragging ? 3 : 1;
+                ctx.stroke();
+                
+                // Внутренний круг для глубины
+                if (!isDragging) {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+                    ctx.beginPath();
+                    ctx.arc(pos.x - radius * 0.3, pos.y - radius * 0.3, radius * 0.3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+            
+            // Визуальная отладка - показываем позицию мыши
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+            ctx.beginPath();
+            ctx.arc(mousePos.x, mousePos.y, 5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Анимационный цикл
+        function animate(currentTime) {
+            if (lastTime === 0) lastTime = currentTime;
+            const deltaTime = (currentTime - lastTime) / 1000;
+            lastTime = currentTime;
+            
+            // Обновление FPS
+            frameCount++;
+            if (currentTime - lastFpsUpdate >= 1000) {
+                fps = Math.round((frameCount * 1000) / (currentTime - lastFpsUpdate));
+                frameCount = 0;
+                lastFpsUpdate = currentTime;
+                updateMetrics();
+            }
+            
+            // Физическая симуляция
+            simulatePhysics(deltaTime);
+            
+            // Рендеринг
+            render();
+            
+            requestAnimationFrame(animate);
+        }
+        
+        // Обновление метрик
+        function updateMetrics() {
+            document.getElementById('fps').textContent = fps;
+            document.getElementById('nodes').textContent = nodes.length;
+            document.getElementById('edges').textContent = edges.length;
+            document.getElementById('algorithm').textContent = 
+                currentAlgorithm === 'fruchterman-reingold' ? 'FR' :
+                currentAlgorithm === 'openord' ? 'OO' : 'HY';
+            document.getElementById('temperature').textContent = temperature.toFixed(1);
+            document.getElementById('phase').textContent = phase;
+        }
+        
+        // Показать статус
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            const statusElement = document.createElement('div');
+            statusElement.className = `status ${type}`;
+            statusElement.textContent = message;
+            statusDiv.appendChild(statusElement);
+            
+            setTimeout(() => {
+                if (statusElement.parentNode) {
+                    statusElement.parentNode.removeChild(statusElement);
+                }
+            }, 3000);
+        }
+        
+        // Запуск при загрузке страницы
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
