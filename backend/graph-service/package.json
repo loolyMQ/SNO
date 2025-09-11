@@ -4,7 +4,6 @@
   "private": true,
   "dependencies": {
     "@platform/shared": "workspace:*",
-    "@platform/monitoring": "workspace:*",
     "express": "^4.21.2",
     "neo4j-driver": "^5.15.0",
     "zod": "^3.22.4"

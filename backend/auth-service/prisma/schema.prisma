@@ -3,12 +3,6 @@
 
 generator client {
   provider = "prisma-client-js"
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
-generator client {
-  provider = "prisma-client-js"
   output   = "../src/generated/prisma"
 }
 
@@ -16,7 +10,6 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-<<<<<<< HEAD
 
 model User {
   id        String   @id @default(cuid())
@@ -68,5 +61,3 @@ enum Role {
   ADMIN
   MODERATOR
 }
-=======
->>>>>>> fa6d7ef (Next, react,  react-dom)

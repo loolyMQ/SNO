@@ -4,7 +4,6 @@
   "private": true,
   "dependencies": {
     "@platform/shared": "workspace:*",
-    "@platform/monitoring": "workspace:*",
     "express": "^4.21.2",
     "meilisearch": "^0.37.0",
     "zod": "^3.22.4"

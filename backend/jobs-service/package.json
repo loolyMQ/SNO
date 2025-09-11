@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@platform/monitoring": "workspace:*",
     "@platform/shared": "workspace:*",
     "@prisma/client": "^6.15.0",
     "bullmq": "^4.15.4",
