@@ -1,4 +1,4 @@
-import { useCallback, useRef, useEffect } from 'react';
+import { useCallback, useRef, useEffect, useState } from 'react';
 import { GraphNode, GraphEdge } from '../types';
 
 export interface PhysicsConfig {
@@ -9,11 +9,11 @@ export interface PhysicsConfig {
   damping: number;
   
   // Пружинная система связей
-  naturalLinkLength: number;    // Естественная длина связи (200)
-  maxLinkStretch: number;       // Максимальное растяжение (500)
-  minLinkLength: number;        // Минимальная длина при сжатии (75)
-  springStiffness: number;      // Жесткость пружины
-  springDamping: number;        // Демпфирование пружины
+  naturalLinkLength: number;
+  maxLinkStretch: number;
+  minLinkLength: number;
+  springStiffness: number;
+  springDamping: number;
   
   // Температура и охлаждение
   initialTemperature: number;
@@ -25,13 +25,6 @@ export interface PhysicsConfig {
   targetFPS: number;
   maxFPS: number;
   minFPS: number;
-  
-  // Дополнительные параметры
-  maxDisplacement?: number;
-  repulsionMultiplier?: number;
-  attractionMultiplier?: number;
-  algorithm?: 'fruchterman-reingold' | 'openord' | 'hybrid';
-  isRunning?: boolean;
 }
 
 export interface UseGraphPhysicsProps {
@@ -41,23 +34,23 @@ export interface UseGraphPhysicsProps {
   onUpdate?: (positions: Map<string, { x: number; y: number }>) => void;
 }
 
-  const defaultConfig: PhysicsConfig = {
+const defaultConfig: PhysicsConfig = {
   repulsion: 20000,
   attraction: 120,
   gravity: 0.1,
-    damping: 0.85,
+  damping: 0.85,
   
   // Пружинная система
-  naturalLinkLength: 200,      // Естественная длина связи
-  maxLinkStretch: 500,         // Максимальное растяжение
-  minLinkLength: 75,           // Минимальная длина при сжатии
-  springStiffness: 0.8,        // Жесткость пружины
-  springDamping: 0.9,          // Демпфирование пружины
+  naturalLinkLength: 200,
+  maxLinkStretch: 500,
+  minLinkLength: 75,
+  springStiffness: 0.8,
+  springDamping: 0.9,
   
   // Температура
   initialTemperature: 1000,
   minTemperature: 0.1,
-    coolingRate: 0.95,
+  coolingRate: 0.95,
   
   // Производительность
   adaptiveFPS: true,
@@ -73,14 +66,16 @@ export function useGraphPhysics({ nodes, edges, config = {}, onUpdate }: UseGrap
   const currentPositions = useRef<Map<string, { x: number; y: number }>>(new Map());
   const velocities = useRef<Map<string, { vx: number; vy: number }>>(new Map());
   const pinnedRef = useRef<Set<string>>(new Set());
-  const temperatureRef = useRef(physicsConfig.initialTemperature);
-  const lastTimeRef = useRef(0);
   const animationFrameRef = useRef<number | undefined>(undefined);
   
-  // Метрики производительности
-  const fpsRef = useRef(0);
+  // Состояние для UI (вызывает ре-рендер)
+  const [temperature, setTemperature] = useState(physicsConfig.initialTemperature);
+  const [fps, setFps] = useState(0);
+  
+  npx tsx src/simple-index.ts  // Метрики производительности
   const frameCountRef = useRef(0);
   const lastFpsTimeRef = useRef(0);
+  const lastTimeRef = useRef(0);
   
   // Инициализация позиций
   const initializePositions = useCallback(() => {
@@ -98,7 +93,7 @@ export function useGraphPhysics({ nodes, edges, config = {}, onUpdate }: UseGrap
       velocities.current.set(node.id, { vx: 0, vy: 0 });
     });
     
-    temperatureRef.current = physicsConfig.initialTemperature;
+    setTemperature(physicsConfig.initialTemperature);
   }, [nodes, physicsConfig.initialTemperature]);
   
   // Пружинная сила связи
@@ -117,7 +112,7 @@ export function useGraphPhysics({ nodes, edges, config = {}, onUpdate }: UseGrap
   }, [physicsConfig]);
   
   // Симуляция Fruchterman-Reingold с пружинной системой
-  const simulateFruchtermanReingold = useCallback((deltaTime: number) => {
+  const simulateFruchtermanReingold = useCallback((deltaTime: number, currentTemp: number) => {
     const nodes = Array.from(currentPositions.current.keys());
     const area = 1000 * 1000; // Общая площадь
     const k = Math.sqrt(area / nodes.length);
@@ -134,8 +129,8 @@ export function useGraphPhysics({ nodes, edges, config = {}, onUpdate }: UseGrap
       const posA = currentPositions.current.get(nodeA);
       if (!posA) continue;
       
-        for (let j = i + 1; j < nodes.length; j++) {
-          const nodeB = nodes[j];
+      for (let j = i + 1; j < nodes.length; j++) {
+        const nodeB = nodes[j];
         const posB = currentPositions.current.get(nodeB);
         if (!posB) continue;
         
@@ -185,8 +180,8 @@ export function useGraphPhysics({ nodes, edges, config = {}, onUpdate }: UseGrap
     // Гравитация к центру
     nodes.forEach(nodeId => {
       const pos = currentPositions.current.get(nodeId)!;
-    const centerX = 0;
-    const centerY = 0;
+      const centerX = 0;
+      const centerY = 0;
       const dx = centerX - pos.x;
       const dy = centerY - pos.y;
       
@@ -203,7 +198,7 @@ export function useGraphPhysics({ nodes, edges, config = {}, onUpdate }: UseGrap
       
       if (!isPinned) {
         // Применяем силу с учетом температуры
-        const forceMultiplier = temperatureRef.current / physicsConfig.initialTemperature;
+        const forceMultiplier = currentTemp / physicsConfig.initialTemperature;
         velocity.vx += force.fx * deltaTime * forceMultiplier;
         velocity.vy += force.fy * deltaTime * forceMultiplier;
         
@@ -224,20 +219,14 @@ export function useGraphPhysics({ nodes, edges, config = {}, onUpdate }: UseGrap
         pos.y += velocity.vy * deltaTime;
       }
     });
-    
-    // Охлаждение температуры
-    temperatureRef.current = Math.max(
-      physicsConfig.minTemperature,
-      temperatureRef.current * physicsConfig.coolingRate
-    );
   }, [edges, physicsConfig, calculateSpringForce]);
   
   // Адаптивная симуляция
   const simulatePhysics = useCallback((currentTime: number) => {
     if (lastTimeRef.current === 0) {
       lastTimeRef.current = currentTime;
-        return;
-      }
+      return;
+    }
 
     const deltaTime = (currentTime - lastTimeRef.current) / 1000; // в секундах
     lastTimeRef.current = currentTime;
@@ -245,12 +234,22 @@ export function useGraphPhysics({ nodes, edges, config = {}, onUpdate }: UseGrap
     // Ограничиваем deltaTime для стабильности
     const clampedDeltaTime = Math.min(deltaTime, 1/30); // максимум 30 FPS
     
-    simulateFruchtermanReingold(clampedDeltaTime);
+    // Охлаждение температуры
+    const newTemperature = Math.max(
+      physicsConfig.minTemperature,
+      temperature * physicsConfig.coolingRate
+    );
+    
+    // Обновляем температуру в состоянии
+    setTemperature(newTemperature);
+    
+    // Запускаем симуляцию с новой температурой
+    simulateFruchtermanReingold(clampedDeltaTime, newTemperature);
     
     // Обновляем метрики FPS
     frameCountRef.current++;
     if (currentTime - lastFpsTimeRef.current >= 1000) {
-      fpsRef.current = frameCountRef.current;
+      setFps(frameCountRef.current);
       frameCountRef.current = 0;
       lastFpsTimeRef.current = currentTime;
     }
@@ -259,7 +258,7 @@ export function useGraphPhysics({ nodes, edges, config = {}, onUpdate }: UseGrap
     if (onUpdate) {
       onUpdate(new Map(currentPositions.current));
     }
-  }, [simulateFruchtermanReingold, onUpdate]);
+  }, [simulateFruchtermanReingold, onUpdate, temperature, physicsConfig]);
   
   // Основной цикл анимации
   const animate = useCallback((currentTime: number) => {
@@ -271,6 +270,7 @@ export function useGraphPhysics({ nodes, edges, config = {}, onUpdate }: UseGrap
   const startSimulation = useCallback(() => {
     if (animationFrameRef.current) return;
     
+    console.log('Starting simulation...');
     initializePositions();
     lastTimeRef.current = 0;
     animationFrameRef.current = requestAnimationFrame(animate);
@@ -295,7 +295,7 @@ export function useGraphPhysics({ nodes, edges, config = {}, onUpdate }: UseGrap
   
   // Нагрев системы
   const heatUp = useCallback(() => {
-    temperatureRef.current = physicsConfig.initialTemperature;
+    setTemperature(physicsConfig.initialTemperature);
     
     // Добавляем случайные импульсы
     nodes.forEach(node => {
@@ -345,10 +345,25 @@ export function useGraphPhysics({ nodes, edges, config = {}, onUpdate }: UseGrap
   // Автозапуск при изменении данных
   useEffect(() => {
     if (nodes.length > 0) {
+      console.log('Starting simulation with', nodes.length, 'nodes');
       startSimulation();
     }
     return () => stopSimulation();
   }, [nodes.length, startSimulation, stopSimulation]);
+  
+  // Принудительное обновление температуры каждую секунду
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newTemp = Math.max(
+        physicsConfig.minTemperature,
+        temperature * physicsConfig.coolingRate
+      );
+      setTemperature(newTemp);
+      console.log('Forced temperature update:', newTemp);
+    }, 1000); // Обновляем каждую секунду
+    
+    return () => clearInterval(interval);
+  }, [temperature, physicsConfig.minTemperature, physicsConfig.coolingRate]);
 
   return {
     // Управление симуляцией
@@ -366,8 +381,8 @@ export function useGraphPhysics({ nodes, edges, config = {}, onUpdate }: UseGrap
     // Состояние
     positions: currentPositions.current,
     velocities: velocities.current,
-    temperature: temperatureRef.current,
-    fps: fpsRef.current,
+    temperature,
+    fps,
     
     // Конфигурация
     config: physicsConfig,

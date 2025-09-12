@@ -1,16 +1,27 @@
-# syntax=docker/dockerfile:1
-FROM node:20-alpine AS base
-WORKDIR /app
-COPY package.json pnpm-lock.yaml ./
-RUN npm install -g pnpm && pnpm install --frozen-lockfile
+FROM node:18-alpine
 
-FROM base AS build
+WORKDIR /app
+
+# Копируем package.json и pnpm-lock.yaml
+COPY package.json pnpm-lock.yaml* ./
+COPY ../../shared/package.json ../../shared/
+COPY ../../package.json ../../pnpm-workspace.yaml ../../
+
+# Устанавливаем pnpm
+RUN npm install -g pnpm
+
+# Устанавливаем зависимости
+RUN pnpm install --frozen-lockfile
+
+# Копируем исходный код
 COPY . .
+COPY ../../shared ../../shared
+
+# Собираем проект
 RUN pnpm build
 
-FROM node:20-alpine AS production
-WORKDIR /app
-COPY package.json pnpm-lock.yaml ./
-RUN npm install -g pnpm && pnpm install --frozen-lockfile --production
-COPY --from=build /app/dist ./dist
-CMD ["node", "dist/index.js"]
+# Открываем порт
+EXPOSE 3000
+
+# Запускаем приложение
+CMD ["pnpm", "start"]

@@ -4,288 +4,228 @@ import { GraphNode, GraphEdge } from '../types';
 export interface GraphTransform {
   x: number;
   y: number;
-  k: number;
-}
-
-export interface GraphSelection {
-  nodes: Set<string>;
-  edges: Set<string>;
-}
-
-export interface GraphHover {
-  node?: string;
-  edge?: string;
-}
-
-export interface InteractivityConfig {
-  enableDrag: boolean;
-  enableZoom: boolean;
-  enablePan: boolean;
-  enableHover: boolean;
-  enableSelection: boolean;
-  zoomSpeed: number;
-  minZoom: number;
-  maxZoom: number;
-  panSpeed: number;
-  hoverRadius?: number;
+  scale: number;
 }
 
 export interface UseGraphInteractivityProps {
   nodes: GraphNode[];
   edges: GraphEdge[];
-  config?: Partial<InteractivityConfig>;
-  onNodeDrag?: (nodeId: string, x: number, y: number) => void;
-  onNodeClick?: (nodeId: string, event: MouseEvent) => void;
+  positions: Map<string, { x: number; y: number }>;
+  onNodeClick?: (nodeId: string) => void;
+  onEdgeClick?: (edgeId: string) => void;
   onNodeHover?: (nodeId: string | null) => void;
-  onEdgeClick?: (edgeId: string, event: MouseEvent) => void;
   onEdgeHover?: (edgeId: string | null) => void;
-  onTransformChange?: (transform: GraphTransform) => void;
+  updateNodePosition: (nodeId: string, x: number, y: number) => void;
 }
-
-const defaultConfig: InteractivityConfig = {
-  enableDrag: true,
-  enableZoom: true,
-  enablePan: true,
-  enableHover: true,
-  enableSelection: true,
-  zoomSpeed: 0.1,
-  minZoom: 0.1,
-  maxZoom: 5,
-  panSpeed: 1,
-};
 
 export function useGraphInteractivity({
   nodes,
-  config = {},
-  onNodeDrag,
+  edges,
+  positions,
   onNodeClick,
-  onNodeHover,
   onEdgeClick,
+  onNodeHover,
   onEdgeHover,
-  onTransformChange,
+  updateNodePosition,
 }: UseGraphInteractivityProps) {
-  const interactivityConfig = { ...defaultConfig, ...config };
-  
-  // Состояние интерактивности
-  const [transform, setTransform] = useState<GraphTransform>({ x: 0, y: 0, k: 1 });
-  const [selection, setSelection] = useState<GraphSelection>({ nodes: new Set(), edges: new Set() });
-  const [hover, setHover] = useState<GraphHover>({});
-  
-  // Refs для отслеживания состояния
-  const isDraggingRef = useRef(false);
-  const dragNodeRef = useRef<string | null>(null);
-  const lastMousePosRef = useRef({ x: 0, y: 0 });
-  const isPanningRef = useRef(false);
-  
-  // Обработка начала перетаскивания узла
-  const handleNodeDragStart = useCallback((nodeId: string, event: MouseEvent) => {
-    if (!interactivityConfig.enableDrag) return;
-    
-    isDraggingRef.current = true;
-    dragNodeRef.current = nodeId;
-    lastMousePosRef.current = { x: event.clientX, y: event.clientY };
-    
-    // Предотвращаем выделение текста
-    event.preventDefault();
-  }, [interactivityConfig.enableDrag]);
-  
-  // Обработка перетаскивания узла
-  const handleNodeDrag = useCallback((event: MouseEvent) => {
-    if (!isDraggingRef.current || !dragNodeRef.current) return;
-    
-    const deltaX = (event.clientX - lastMousePosRef.current.x) / transform.k;
-    const deltaY = (event.clientY - lastMousePosRef.current.y) / transform.k;
-    
-    // Находим узел и обновляем его позицию
-    const node = nodes.find(n => n.id === dragNodeRef.current);
-    if (node && onNodeDrag) {
-      const newX = (node.x || 0) + deltaX;
-      const newY = (node.y || 0) + deltaY;
-      onNodeDrag(dragNodeRef.current, newX, newY);
-    }
-    
-    lastMousePosRef.current = { x: event.clientX, y: event.clientY };
-  }, [nodes, transform.k, onNodeDrag]);
-  
-  // Обработка окончания перетаскивания узла
-  const handleNodeDragEnd = useCallback(() => {
-    isDraggingRef.current = false;
-    dragNodeRef.current = null;
-  }, []);
-  
-  // Обработка клика по узлу
-  const handleNodeClick = useCallback((nodeId: string, event: MouseEvent) => {
-    if (interactivityConfig.enableSelection) {
-      setSelection(prev => {
-        const newSelection = { ...prev };
-        if (newSelection.nodes.has(nodeId)) {
-          newSelection.nodes.delete(nodeId);
-        } else {
-          newSelection.nodes.add(nodeId);
+  // Состояние трансформации
+  const [transform, setTransform] = useState<GraphTransform>({
+    x: 0,
+    y: 0,
+    scale: 1,
+  });
+
+  // Состояние выбора и наведения
+  const [selectedNode, setSelectedNode] = useState<string | null>(null);
+  const [hoveredNode, setHoveredNode] = useState<string | null>(null);
+  const [hoveredEdge, setHoveredEdge] = useState<string | null>(null);
+
+  // Состояние перетаскивания
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
+  const [dragNode, setDragNode] = useState<string | null>(null);
+
+  // Обработчик нажатия мыши
+  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = e.currentTarget;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    // Преобразуем координаты с учётом трансформации
+    const worldX = (x - transform.x) / transform.scale;
+    const worldY = (y - transform.y) / transform.scale;
+
+    // Проверяем, кликнули ли на узел
+    let clickedNode: string | null = null;
+    for (const node of nodes) {
+      const pos = positions.get(node.id);
+      if (pos) {
+        const dx = worldX - pos.x;
+        const dy = worldY - pos.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance <= 8) { // радиус узла
+          clickedNode = node.id;
+          break;
         }
-        return newSelection;
-      });
+      }
     }
+
+    if (clickedNode) {
+      setDragNode(clickedNode);
+      setSelectedNode(clickedNode);
+      onNodeClick?.(clickedNode);
+    } else {
+      setSelectedNode(null);
+      setIsDragging(true);
+      setDragStart({ x, y });
+    }
+  }, [nodes, positions, transform, onNodeClick]);
+
+  // Обработчик движения мыши
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = e.currentTarget;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    if (dragNode) {
+      // Перетаскивание узла
+      const worldX = (x - transform.x) / transform.scale;
+      const worldY = (y - transform.y) / transform.scale;
+      updateNodePosition(dragNode, worldX, worldY);
+    } else if (isDragging && dragStart) {
+      // Панорамирование
+      const dx = x - dragStart.x;
+      const dy = y - dragStart.y;
+      setTransform(prev => ({
+        ...prev,
+        x: prev.x + dx,
+        y: prev.y + dy,
+      }));
+      setDragStart({ x, y });
+    } else {
+      // Проверка наведения на узел или ребро
+      const worldX = (x - transform.x) / transform.scale;
+      const worldY = (y - transform.y) / transform.scale;
+
+      // Проверяем узлы
+      let hoveredNodeId: string | null = null;
+      for (const node of nodes) {
+        const pos = positions.get(node.id);
+        if (pos) {
+          const dx = worldX - pos.x;
+          const dy = worldY - pos.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          if (distance <= 8) {
+            hoveredNodeId = node.id;
+            break;
+          }
+        }
+      }
+
+      // Проверяем рёбра
+      let hoveredEdgeId: string | null = null;
+      if (!hoveredNodeId) {
+        for (const edge of edges) {
+          const sourcePos = positions.get(edge.source);
+          const targetPos = positions.get(edge.target);
+          if (sourcePos && targetPos) {
+            // Простая проверка расстояния до линии
+            const dx = targetPos.x - sourcePos.x;
+            const dy = targetPos.y - sourcePos.y;
+            const length = Math.sqrt(dx * dx + dy * dy);
+            if (length > 0) {
+              const t = Math.max(0, Math.min(1, 
+                ((worldX - sourcePos.x) * dx + (worldY - sourcePos.y) * dy) / (length * length)
+              ));
+              const projX = sourcePos.x + t * dx;
+              const projY = sourcePos.y + t * dy;
+              const distance = Math.sqrt(
+                (worldX - projX) * (worldX - projX) + (worldY - projY) * (worldY - projY)
+              );
+              if (distance <= 5) {
+                hoveredEdgeId = edge.id;
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      // Обновляем состояние наведения
+      if (hoveredNode !== hoveredNodeId) {
+        setHoveredNode(hoveredNodeId);
+        onNodeHover?.(hoveredNodeId);
+      }
+      if (hoveredEdge !== hoveredEdgeId) {
+        setHoveredEdge(hoveredEdgeId);
+        onEdgeHover?.(hoveredEdgeId);
+      }
+    }
+  }, [dragNode, isDragging, dragStart, transform, nodes, edges, positions, hoveredNode, hoveredEdge, onNodeHover, onEdgeHover, updateNodePosition]);
+
+  // Обработчик отпускания мыши
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+    setDragStart(null);
+    setDragNode(null);
+  }, []);
+
+  // Обработчик колеса мыши
+  const handleWheel = useCallback((e: React.WheelEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
     
-    if (onNodeClick) {
-      onNodeClick(nodeId, event);
-    }
-  }, [interactivityConfig.enableSelection, onNodeClick]);
-  
-  // Обработка наведения на узел
+    const canvas = e.currentTarget;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const scaleFactor = e.deltaY > 0 ? 0.9 : 1.1;
+    const newScale = Math.max(0.1, Math.min(5, transform.scale * scaleFactor));
+
+    // Масштабирование относительно позиции мыши
+    const scaleRatio = newScale / transform.scale;
+    setTransform(prev => ({
+      x: x - (x - prev.x) * scaleRatio,
+      y: y - (y - prev.y) * scaleRatio,
+      scale: newScale,
+    }));
+  }, [transform]);
+
+  // Обработчики кликов
+  const handleNodeClick = useCallback((nodeId: string) => {
+    setSelectedNode(nodeId);
+    onNodeClick?.(nodeId);
+  }, [onNodeClick]);
+
+  const handleEdgeClick = useCallback((edgeId: string) => {
+    onEdgeClick?.(edgeId);
+  }, [onEdgeClick]);
+
+  // Обработчики наведения
   const handleNodeHover = useCallback((nodeId: string | null) => {
-    if (!interactivityConfig.enableHover) return;
-    
-    setHover(prev => ({ ...prev, node: nodeId || undefined }));
-    
-    if (onNodeHover) {
-      onNodeHover(nodeId);
-    }
-  }, [interactivityConfig.enableHover, onNodeHover]);
-  
-  // Обработка клика по связи
-  const handleEdgeClick = useCallback((edgeId: string, event: MouseEvent) => {
-    if (interactivityConfig.enableSelection) {
-      setSelection(prev => {
-        const newSelection = { ...prev };
-        if (newSelection.edges.has(edgeId)) {
-          newSelection.edges.delete(edgeId);
-        } else {
-          newSelection.edges.add(edgeId);
-        }
-        return newSelection;
-      });
-    }
-    
-    if (onEdgeClick) {
-      onEdgeClick(edgeId, event);
-    }
-  }, [interactivityConfig.enableSelection, onEdgeClick]);
-  
-  // Обработка наведения на связь
+    setHoveredNode(nodeId);
+    onNodeHover?.(nodeId);
+  }, [onNodeHover]);
+
   const handleEdgeHover = useCallback((edgeId: string | null) => {
-    if (!interactivityConfig.enableHover) return;
-    
-    setHover(prev => ({ ...prev, edge: edgeId || undefined }));
-    
-    if (onEdgeHover) {
-      onEdgeHover(edgeId);
-    }
-  }, [interactivityConfig.enableHover, onEdgeHover]);
-  
-  // Обработка зума колесиком мыши
-  const handleWheel = useCallback((event: WheelEvent) => {
-    if (!interactivityConfig.enableZoom) return;
-    
-    event.preventDefault();
-    
-    const delta = event.deltaY > 0 ? -interactivityConfig.zoomSpeed : interactivityConfig.zoomSpeed;
-    const newScale = Math.max(
-      interactivityConfig.minZoom,
-      Math.min(interactivityConfig.maxZoom, transform.k * (1 + delta))
-    );
-    
-    // Масштабируем относительно позиции мыши
-    const rect = (event.target as Element).getBoundingClientRect();
-    const mouseX = event.clientX - rect.left;
-    const mouseY = event.clientY - rect.top;
-    
-    const newTransform = {
-      x: transform.x - (mouseX - transform.x) * (newScale / transform.k - 1),
-      y: transform.y - (mouseY - transform.y) * (newScale / transform.k - 1),
-      k: newScale,
-    };
-    
-    setTransform(newTransform);
-    
-    if (onTransformChange) {
-      onTransformChange(newTransform);
-    }
-  }, [interactivityConfig, transform, onTransformChange]);
-  
-  // Обработка начала панорамирования
-  const handlePanStart = useCallback((event: MouseEvent) => {
-    if (!interactivityConfig.enablePan) return;
-    
-    isPanningRef.current = true;
-    lastMousePosRef.current = { x: event.clientX, y: event.clientY };
-  }, [interactivityConfig.enablePan]);
-  
-  // Обработка панорамирования
-  const handlePan = useCallback((event: MouseEvent) => {
-    if (!isPanningRef.current) return;
-    
-    const deltaX = event.clientX - lastMousePosRef.current.x;
-    const deltaY = event.clientY - lastMousePosRef.current.y;
-    
-    const newTransform = {
-      x: transform.x + deltaX * interactivityConfig.panSpeed,
-      y: transform.y + deltaY * interactivityConfig.panSpeed,
-      k: transform.k,
-    };
-    
-    setTransform(newTransform);
-    lastMousePosRef.current = { x: event.clientX, y: event.clientY };
-    
-    if (onTransformChange) {
-      onTransformChange(newTransform);
-    }
-  }, [interactivityConfig, transform, onTransformChange]);
-  
-  // Обработка окончания панорамирования
-  const handlePanEnd = useCallback(() => {
-    isPanningRef.current = false;
-  }, []);
-  
-  // Сброс трансформации
-  const resetTransform = useCallback(() => {
-    const newTransform = { x: 0, y: 0, k: 1 };
-    setTransform(newTransform);
-    
-    if (onTransformChange) {
-      onTransformChange(newTransform);
-    }
-  }, [onTransformChange]);
-  
-  // Очистка выделения
-  const clearSelection = useCallback(() => {
-    setSelection({ nodes: new Set(), edges: new Set() });
-  }, []);
-  
-  // Очистка наведения
-  const clearHover = useCallback(() => {
-    setHover({});
-  }, []);
-  
+    setHoveredEdge(edgeId);
+    onEdgeHover?.(edgeId);
+  }, [onEdgeHover]);
+
   return {
-    // Состояние
     transform,
-    selection,
-    hover,
-    
-    // Обработчики событий
-    handleNodeDragStart,
-    handleNodeDrag,
-    handleNodeDragEnd,
-    handleNodeClick,
-    handleNodeHover,
-    handleEdgeClick,
-    handleEdgeHover,
+    selectedNode,
+    hoveredNode,
+    hoveredEdge,
+    handleMouseDown,
+    handleMouseMove,
+    handleMouseUp,
     handleWheel,
-    handlePanStart,
-    handlePan,
-    handlePanEnd,
-    
-    // Ссылки для проверки состояния
-    isDraggingRef,
-    isPanningRef,
-    
-    // Управление
-    resetTransform,
-    clearSelection,
-    clearHover,
-    
-    // Конфигурация
-    config: interactivityConfig,
+    handleNodeClick,
+    handleEdgeClick,
+    handleNodeHover,
+    handleEdgeHover,
   };
 }

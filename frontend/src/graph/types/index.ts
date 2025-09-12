@@ -34,7 +34,6 @@ export interface PhysicsConfig {
   maxDisplacement: number;
   springLength: number;
   maxLinkLength: number;
-  maxDisplacement?: number;
   repulsionMultiplier?: number;
   attractionMultiplier?: number;
   algorithm?: 'fruchterman-reingold' | 'openord' | 'hybrid';
@@ -51,11 +50,32 @@ export interface PhysicsState {
 }
 
 // Типы для интерактивности
+export interface GraphTransform {
+  x: number;
+  y: number;
+  k: number; // scale
+}
+
+export interface GraphSelection {
+  nodes: Set<string>;
+  edges: Set<string>;
+}
+
+export interface GraphHover {
+  node?: string;
+  edge?: string;
+}
+
 export interface InteractivityConfig {
   enableDrag: boolean;
   enableZoom: boolean;
   enablePan: boolean;
   enableHover: boolean;
+  enableSelection: boolean;
+  zoomSpeed: number;
+  minZoom: number;
+  maxZoom: number;
+  panSpeed: number;
   hoverRadius?: number;
 }
 

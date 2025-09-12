@@ -1,14 +1,30 @@
 {
-  "name": "frontend",
-  "version": "0.1.0",
+  "name": "@science-map/frontend",
+  "version": "1.0.0",
+  "description": "Frontend для проекта Карта науки",
   "private": true,
-  "devDependencies": {
-    "typescript": "^5.5.4"
-  },
   "scripts": {
-    "dev": "echo dev frontend",
-    "build": "echo build frontend",
-    "lint": "echo lint",
-    "test": "echo test"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "clean": "rm -rf .next"
+  },
+  "dependencies": {
+    "@science-map/shared": "workspace:*",
+    "@types/d3": "^7.4.3",
+    "axios": "^1.6.0",
+    "d3": "^7.9.0",
+    "next": "14.0.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.8.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "eslint": "^8.0.0",
+    "eslint-config-next": "14.0.4",
+    "typescript": "^5.2.2"
   }
 }

@@ -1,0 +1,57 @@
+2025-09-12T20:44:48.227167Z  INFO turborepo_lib::daemon::server: triggering shutdown
+2025-09-12T20:44:48.396403Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/.turbo-cookie")}
+2025-09-12T20:44:48.396410Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-12T20:44:48.496881Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/1.cookie")}
+2025-09-12T20:44:48.496891Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-12T20:44:48.698187Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/daemon/518d2c55a019c7a8-turbo.log.2025-09-12")}
+2025-09-12T20:44:48.698211Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-12T20:45:27.298110Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/types/index.ts"), AnchoredSystemPathBuf("frontend/src/types")}
+2025-09-12T20:45:27.298125Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-12T20:45:27.497759Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/types/index.ts")}
+2025-09-12T20:45:27.497770Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-12T20:45:30.998015Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/app/page.tsx")}
+2025-09-12T20:45:30.998058Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-12T20:45:36.898031Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/components/GraphCanvas.tsx")}
+2025-09-12T20:45:36.898081Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-12T20:45:43.297995Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/components/GraphCanvas.tsx")}
+2025-09-12T20:45:43.298024Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-12T20:45:52.397677Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/components/GraphCanvas.tsx")}
+2025-09-12T20:45:52.397698Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-12T20:46:03.298056Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/components/ControlsPanel.tsx")}
+2025-09-12T20:46:03.298069Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-12T20:46:09.398851Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/services/ApiService.ts")}
+2025-09-12T20:46:09.398873Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-12T20:46:35.798454Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/components/ControlsPanel.tsx"), AnchoredSystemPathBuf("frontend/app/page.tsx"), AnchoredSystemPathBuf("frontend/src/services/ApiService.ts"), AnchoredSystemPathBuf("frontend/src/types/index.ts"), AnchoredSystemPathBuf("frontend/src/components/GraphCanvas.tsx")}
+2025-09-12T20:46:35.798485Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-12T20:46:35.798509Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-09-12T20:49:37.606248Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/2.cookie")}
+2025-09-12T20:49:37.606276Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-12T20:54:59.209651Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/components/GraphCanvas.tsx")}
+2025-09-12T20:54:59.209695Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-12T20:55:03.709434Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/3.cookie")}
+2025-09-12T20:55:03.709463Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-12T20:55:44.408268Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/components/GraphCanvas.tsx")}
+2025-09-12T20:55:44.408294Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-12T20:55:44.439940Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-09-12T20:58:43.414020Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/components/GraphCanvas.tsx")}
+2025-09-12T20:58:43.414545Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-12T20:59:05.609979Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/components/GraphCanvas.tsx")}
+2025-09-12T20:59:05.609993Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-12T20:59:05.810958Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/components/GraphCanvas.tsx")}
+2025-09-12T20:59:05.810967Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-12T20:59:10.111151Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/4.cookie")}
+2025-09-12T20:59:10.111160Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-12T21:01:19.517485Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/components/GraphCanvas.tsx")}
+2025-09-12T21:01:19.517894Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-12T21:01:19.517921Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-09-12T21:01:44.712230Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/app/page.tsx")}
+2025-09-12T21:01:44.712241Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-12T21:01:48.712309Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/5.cookie")}
+2025-09-12T21:01:48.712318Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-12T21:01:50.311766Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("shared/tsconfig.tsbuildinfo")}
+2025-09-12T21:01:50.311779Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/shared"), path: AnchoredSystemPathBuf("shared") }}))
+2025-09-12T21:02:16.711991Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/6.cookie")}
+2025-09-12T21:02:16.712002Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-12T21:02:45.542718Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/app/page.tsx")}
+2025-09-12T21:02:45.543115Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-12T21:02:45.639029Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
