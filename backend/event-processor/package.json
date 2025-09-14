@@ -1,0 +1,17 @@
+{
+  "name": "@science-map/event-processor",
+  "version": "1.0.0",
+  "description": "Event Processor для обработки Kafka событий",
+  "main": "src/simple-index.ts",
+  "scripts": {
+    "start": "tsx src/simple-index.ts",
+    "dev": "tsx watch src/simple-index.ts"
+  },
+  "dependencies": {
+    "kafkajs": "^2.2.4"
+  },
+  "devDependencies": {
+    "tsx": "^4.1.4",
+    "typescript": "^5.2.2"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "@platform/configs",
+  "version": "1.0.0",
+  "description": "Общие конфигурации для проекта Карта науки",
+  "private": true,
+  "main": "index.js",
+  "files": [
+    "tsconfig.base.json",
+    "eslint.json",
+    "prettier.json",
+    "jest.json"
+  ],
+  "scripts": {
+    "build": "echo 'Configs are ready to use'",
+    "clean": "echo 'Configs cleaned'"
+  },
+  "devDependencies": {
+    "@types/node": "^20.8.0",
+    "typescript": "^5.2.2"
+  }
+}

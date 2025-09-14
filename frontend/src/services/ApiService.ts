@@ -21,7 +21,7 @@ export class ApiService {
   private baseUrl: string;
 
   constructor() {
-    this.baseUrl = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:3001';
+    this.baseUrl = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:3004';
   }
 
   async getGraphData(): Promise<GraphData> {
@@ -126,6 +126,51 @@ export class ApiService {
     } catch (error: any) {
       console.error('API Error (resetPhysics):', error);
       throw new Error(error.response?.data?.error || 'Ошибка сброса физики');
+    }
+  }
+
+  async getCategoryTopics(categoryId: string): Promise<any> {
+    try {
+      const response = await axios.get<ApiResponse>(`${this.baseUrl}/api/categories/${categoryId}/topics`);
+      
+      if (!response.data.success) {
+        throw new Error(response.data.error || 'Ошибка получения тем категории');
+      }
+
+      return response.data.data;
+    } catch (error: any) {
+      console.error('API Error (getCategoryTopics):', error);
+      throw new Error(error.response?.data?.error || 'Ошибка получения тем категории');
+    }
+  }
+
+  async getCategories(): Promise<any> {
+    try {
+      const response = await axios.get<ApiResponse>(`${this.baseUrl}/api/categories`);
+      
+      if (!response.data.success) {
+        throw new Error(response.data.error || 'Ошибка получения категорий');
+      }
+
+      return response.data.data;
+    } catch (error: any) {
+      console.error('API Error (getCategories):', error);
+      throw new Error(error.response?.data?.error || 'Ошибка получения категорий');
+    }
+  }
+
+  async getTopicConnections(topicId: string): Promise<any> {
+    try {
+      const response = await axios.get<ApiResponse>(`${this.baseUrl}/api/topics/${topicId}/connections`);
+      
+      if (!response.data.success) {
+        throw new Error(response.data.error || 'Ошибка получения связей темы');
+      }
+
+      return response.data.data;
+    } catch (error: any) {
+      console.error('API Error (getTopicConnections):', error);
+      throw new Error(error.response?.data?.error || 'Ошибка получения связей темы');
     }
   }
 }

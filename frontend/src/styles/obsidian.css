@@ -1,0 +1,372 @@
+/* Obsidian-подобный интерфейс */
+.obsidian-layout {
+  display: flex;
+  height: 100vh;
+  background: #1e1e1e;
+  color: #dcddde;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Левая панель */
+.left-panel {
+  width: 250px;
+  background: #2d2d30;
+  border-right: 1px solid #3e3e42;
+  display: flex;
+  flex-direction: column;
+}
+
+.navigation-buttons {
+  padding: 20px 0;
+}
+
+.nav-button {
+  width: 100%;
+  padding: 12px 20px;
+  background: none;
+  border: none;
+  color: #dcddde;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: background-color 0.2s;
+}
+
+.nav-button:hover {
+  background: #3e3e42;
+}
+
+.nav-button.active {
+  background: #007acc;
+  color: white;
+}
+
+.nav-icon {
+  font-size: 18px;
+  width: 20px;
+  text-align: center;
+}
+
+.nav-label {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Центральная панель */
+.center-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #1e1e1e;
+}
+
+/* Вкладки */
+.tabs-container {
+  display: flex;
+  background: #2d2d30;
+  border-bottom: 1px solid #3e3e42;
+  padding: 0 20px;
+  align-items: center;
+  min-height: 40px;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #3e3e42;
+  border: 1px solid #3e3e42;
+  border-bottom: none;
+  cursor: pointer;
+  color: #dcddde;
+  font-size: 14px;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.tab:hover {
+  background: #4e4e52;
+}
+
+.tab.active {
+  background: #1e1e1e;
+  color: #dcddde;
+  border-color: #007acc;
+}
+
+.tab-icon {
+  font-size: 14px;
+}
+
+.tab-title {
+  font-weight: 500;
+}
+
+.tab-close {
+  background: none;
+  border: none;
+  color: #dcddde;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 16px;
+  line-height: 1;
+  margin-left: 8px;
+}
+
+.tab-close:hover {
+  background: #5e5e62;
+}
+
+.tab-add {
+  background: none;
+  border: none;
+  color: #dcddde;
+  cursor: pointer;
+  padding: 8px 12px;
+  font-size: 18px;
+  margin-left: 8px;
+  border-radius: 3px;
+}
+
+.tab-add:hover {
+  background: #3e3e42;
+}
+
+/* Контент вкладки */
+.tab-content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+/* Главная страница */
+.main-page {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 30px;
+}
+
+.page-header h1 {
+  font-size: 32px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: #dcddde;
+}
+
+.page-header p {
+  font-size: 16px;
+  color: #8c8c8c;
+  margin: 0;
+}
+
+.search-section {
+  margin-bottom: 40px;
+}
+
+.categories-grid h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0 0 20px 0;
+  color: #dcddde;
+}
+
+.categories-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.category-item {
+  background: #2d2d30;
+  border: 1px solid #3e3e42;
+  border-radius: 8px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  user-select: none;
+}
+
+.category-item:hover {
+  background: #3e3e42;
+  border-color: #007acc;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 122, 204, 0.2);
+}
+
+.category-item:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 122, 204, 0.3);
+}
+
+.category-icon {
+  font-size: 24px;
+  margin-top: 4px;
+}
+
+.category-info h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: #dcddde;
+}
+
+.category-info p {
+  font-size: 14px;
+  color: #8c8c8c;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Страница категории */
+.category-page {
+  max-width: 100%;
+}
+
+.category-graph-container {
+  height: 600px;
+  background: #2d2d30;
+  border: 1px solid #3e3e42;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Правая панель */
+.right-panel {
+  width: 350px;
+  background: #2d2d30;
+  border-left: 1px solid #3e3e42;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-header {
+  padding: 20px;
+  border-bottom: 1px solid #3e3e42;
+}
+
+.panel-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  color: #dcddde;
+}
+
+.right-graph-container {
+  flex: 1;
+  padding: 20px;
+}
+
+/* Адаптивность */
+@media (max-width: 1200px) {
+  .right-panel {
+    width: 300px;
+  }
+}
+
+@media (max-width: 768px) {
+  .obsidian-layout {
+    flex-direction: column;
+  }
+  
+  .left-panel {
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    overflow-x: auto;
+  }
+  
+  .navigation-buttons {
+    display: flex;
+    padding: 10px 20px;
+    gap: 10px;
+  }
+  
+  .nav-button {
+    flex-shrink: 0;
+    padding: 8px 16px;
+  }
+  
+  .nav-label {
+    display: none;
+  }
+  
+  .right-panel {
+    width: 100%;
+    height: 300px;
+  }
+}
+
+/* Стили для графа */
+.right-graph-container .graph-canvas,
+.category-graph-container .graph-canvas {
+  background: #1e1e1e;
+  border-radius: 6px;
+}
+
+.right-graph-container .graph-node,
+.category-graph-container .graph-node {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.right-graph-container .graph-node:hover,
+.category-graph-container .graph-node:hover {
+  stroke: #007acc;
+  stroke-width: 3px;
+  filter: brightness(1.2);
+}
+
+.right-graph-container .graph-node:active,
+.category-graph-container .graph-node:active {
+  stroke: #005a9e;
+  stroke-width: 4px;
+  filter: brightness(1.1);
+}
+
+/* Страницы тем */
+.topic-page {
+  padding: 2rem;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.topic-content {
+  margin-top: 2rem;
+}
+
+.topic-info {
+  background: #2d2d30;
+  border: 1px solid #3e3e42;
+  border-radius: 8px;
+  padding: 2rem;
+}
+
+.topic-info h2 {
+  color: #007acc;
+  margin-bottom: 1rem;
+}
+
+.topic-info p {
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+}
+
+/* Ошибки */
+.error {
+  background: #5c2d2d;
+  border: 1px solid #8b0000;
+  color: #ff6b6b;
+  padding: 16px;
+  border-radius: 6px;
+  margin: 20px 0;
+}

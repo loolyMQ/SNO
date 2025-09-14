@@ -91,6 +91,41 @@ services:
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
       - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
 
+  # PostgreSQL база данных
+  postgres:
+    image: postgres:15-alpine
+    container_name: science-map-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: science_map
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Meilisearch для поиска
+  meilisearch:
+    image: getmeili/meilisearch:latest
+    container_name: science-map-meilisearch
+    ports:
+      - "7700:7700"
+    environment:
+      MEILI_ENV: development
+      MEILI_MASTER_KEY: masterKey
+    volumes:
+      - meilisearch-data:/meili_data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7700/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   zookeeper-data:
   zookeeper-logs:
@@ -98,6 +133,8 @@ volumes:
   redis-data:
   prometheus-data:
   grafana-data:
+  postgres-data:
+  meilisearch-data:
 
 networks:
   default:

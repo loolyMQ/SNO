@@ -4,9 +4,9 @@
   "description": "Graph Service для проекта Карта науки",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsx watch src/simple-index.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "tsx src/simple-index.ts",
     "clean": "rm -rf dist"
   },
   "dependencies": {

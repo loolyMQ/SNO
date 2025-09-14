@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Button, Input } from './ui';
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
@@ -25,23 +26,23 @@ export function SearchBar({ onSearch, isLoading }: SearchBarProps) {
 
   return (
     <div className="search-container">
-      <form onSubmit={handleSubmit}>
-        <input
+      <form onSubmit={handleSubmit} className="flex gap-2">
+        <Input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyPress={handleKeyPress}
-          placeholder="Поиск по научным работам, авторам, институтам..."
-          className="search-input"
+          placeholder="Поиск по научным данным..."
           disabled={isLoading}
+          className="flex-1"
         />
-        <button 
+        <Button 
           type="submit" 
-          className="button"
           disabled={isLoading || !query.trim()}
+          loading={isLoading}
         >
           {isLoading ? 'Поиск...' : 'Найти'}
-        </button>
+        </Button>
       </form>
     </div>
   );

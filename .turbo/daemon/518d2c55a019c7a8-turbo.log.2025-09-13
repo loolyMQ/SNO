@@ -1,0 +1,158 @@
+2025-09-13T23:22:07.481460Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("backend/event-processor/src/simple-index.ts")}
+2025-09-13T23:22:07.482500Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/event-processor"), path: AnchoredSystemPathBuf("backend/event-processor") }}))
+2025-09-13T23:22:07.575059Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/daemon/518d2c55a019c7a8-turbo.log.2025-09-12"), AnchoredSystemPathBuf(".turbo/daemon/518d2c55a019c7a8-turbo.log.2025-09-13")}
+2025-09-13T23:22:07.575068Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-13T23:22:15.774340Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("backend/event-processor/src/simple-index.ts")}
+2025-09-13T23:22:15.774354Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/event-processor"), path: AnchoredSystemPathBuf("backend/event-processor") }}))
+2025-09-13T23:23:42.172436Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("backend/event-processor/src/simple-index.ts")}
+2025-09-13T23:23:42.172463Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/event-processor"), path: AnchoredSystemPathBuf("backend/event-processor") }}))
+2025-09-13T23:23:42.196988Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-09-13T23:25:13.171187Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("infrastructure/monitoring/grafana/dashboards")}
+2025-09-13T23:25:13.171211Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-13T23:25:32.371835Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("infrastructure/docker-compose.yml")}
+2025-09-13T23:25:32.371857Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-13T23:25:38.672396Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("infrastructure/docker-compose.yml")}
+2025-09-13T23:25:38.672419Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-13T23:26:16.871928Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("infrastructure/docker-compose.yml")}
+2025-09-13T23:26:16.872001Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-13T23:45:17.529285Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(""), AnchoredSystemPathBuf("_tmp_22830_e2b6756afef4ff71adede7001dcf3839")}
+2025-09-13T23:45:17.531424Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-13T23:45:19.721078Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("")}
+2025-09-13T23:45:19.721086Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({}))
+2025-09-13T23:45:20.319436Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("")}
+2025-09-13T23:45:20.319459Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({}))
+2025-09-13T23:45:20.420667Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("pnpm-lock.yaml"), AnchoredSystemPathBuf("pnpm-lock.yaml.426861247")}
+2025-09-13T23:45:20.420679Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-13T23:45:20.520024Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/package.json.236094461"), AnchoredSystemPathBuf("frontend/package.json")}
+2025-09-13T23:45:20.520033Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:45:29.619840Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/i18n/request.ts"), AnchoredSystemPathBuf("frontend/src/i18n")}
+2025-09-13T23:45:29.619894Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:45:29.820444Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/i18n/request.ts")}
+2025-09-13T23:45:29.820453Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:45:41.319612Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/messages"), AnchoredSystemPathBuf("frontend/messages/ru.json")}
+2025-09-13T23:45:41.319633Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:45:41.419152Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/messages/ru.json")}
+2025-09-13T23:45:41.419161Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:45:54.119641Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/messages/en.json")}
+2025-09-13T23:45:54.119690Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:45:54.318075Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/messages/en.json")}
+2025-09-13T23:45:54.318083Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:46:02.019073Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/next.config.js")}
+2025-09-13T23:46:02.019242Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:46:13.218622Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/middleware.ts")}
+2025-09-13T23:46:13.218645Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:46:13.419073Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/middleware.ts")}
+2025-09-13T23:46:13.419081Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:46:16.018180Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/app/[locale]")}
+2025-09-13T23:46:16.018202Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:46:16.034397Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-09-13T23:46:19.019371Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/app/[locale]/page.tsx"), AnchoredSystemPathBuf("frontend/app/page.tsx")}
+2025-09-13T23:46:19.019384Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:46:33.618654Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/app/[locale]/page.tsx")}
+2025-09-13T23:46:33.618697Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:46:44.017716Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/app/[locale]/page.tsx")}
+2025-09-13T23:46:44.017741Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:46:56.917904Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/app/[locale]/page.tsx")}
+2025-09-13T23:46:56.917926Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:47:08.117250Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/app/[locale]/page.tsx")}
+2025-09-13T23:47:08.117270Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:47:19.218037Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/app/[locale]/page.tsx")}
+2025-09-13T23:47:19.218205Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:47:29.917661Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/app/[locale]/page.tsx")}
+2025-09-13T23:47:29.917687Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:47:41.317000Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/app/[locale]/page.tsx")}
+2025-09-13T23:47:41.317029Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:48:02.815953Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/app/[locale]/layout.tsx")}
+2025-09-13T23:48:02.815977Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:48:03.017241Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/app/[locale]/layout.tsx")}
+2025-09-13T23:48:03.017264Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:48:18.916296Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/components/LanguageSwitcher.tsx")}
+2025-09-13T23:48:18.916333Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:48:19.216775Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/components/LanguageSwitcher.tsx")}
+2025-09-13T23:48:19.216797Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:48:32.616738Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/app/[locale]/page.tsx")}
+2025-09-13T23:48:32.616758Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:48:46.717928Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/app/[locale]/page.tsx")}
+2025-09-13T23:48:46.718093Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:49:04.115667Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/app/globals.css")}
+2025-09-13T23:49:04.115692Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:49:18.516358Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/components/SearchBar.tsx")}
+2025-09-13T23:49:18.516383Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:49:32.315520Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/components/SearchBar.tsx")}
+2025-09-13T23:49:32.315577Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:49:43.615486Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/messages/ru.json")}
+2025-09-13T23:49:43.615510Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:49:56.814878Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/messages/en.json")}
+2025-09-13T23:49:56.814924Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:50:22.514010Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/components/ui/Button.tsx"), AnchoredSystemPathBuf("frontend/src/components/ui")}
+2025-09-13T23:50:22.514026Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:50:22.713784Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/components/ui/Button.tsx")}
+2025-09-13T23:50:22.713794Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:50:45.614350Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/components/ui/Input.tsx")}
+2025-09-13T23:50:45.614369Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:50:45.713090Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/components/ui/Input.tsx")}
+2025-09-13T23:50:45.713127Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:51:09.913942Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/components/ui/Card.tsx")}
+2025-09-13T23:51:09.913996Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:51:10.012849Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/components/ui/Card.tsx")}
+2025-09-13T23:51:10.012857Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:51:37.513168Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/components/ui/Modal.tsx")}
+2025-09-13T23:51:37.513195Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:51:38.513167Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/components/ui/Modal.tsx")}
+2025-09-13T23:51:38.513210Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:51:59.512114Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/components/ui/index.ts")}
+2025-09-13T23:51:59.512149Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:51:59.713412Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/components/ui/index.ts")}
+2025-09-13T23:51:59.713424Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:52:11.811801Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/components/SearchBar.tsx")}
+2025-09-13T23:52:11.811822Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:52:25.312528Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/components/SearchBar.tsx")}
+2025-09-13T23:52:25.312550Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:52:56.410797Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/app/[locale]/search"), AnchoredSystemPathBuf("frontend/app/[locale]/search/page.tsx")}
+2025-09-13T23:52:56.410837Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:52:56.611575Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/app/[locale]/search/page.tsx")}
+2025-09-13T23:52:56.611627Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:53:30.412147Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/app/[locale]/settings"), AnchoredSystemPathBuf("frontend/app/[locale]/settings/page.tsx")}
+2025-09-13T23:53:30.412192Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:53:30.712318Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/app/[locale]/settings/page.tsx")}
+2025-09-13T23:53:30.712326Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:53:59.213538Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/app/[locale]/about"), AnchoredSystemPathBuf("frontend/app/[locale]/about/page.tsx")}
+2025-09-13T23:53:59.214347Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:53:59.411447Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/app/[locale]/about/page.tsx")}
+2025-09-13T23:53:59.411459Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:54:18.811225Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/messages/ru.json")}
+2025-09-13T23:54:18.811250Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:54:35.309364Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/messages/en.json")}
+2025-09-13T23:54:35.309402Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:54:59.209440Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/components/Navigation.tsx")}
+2025-09-13T23:54:59.209739Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:54:59.609919Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/components/Navigation.tsx")}
+2025-09-13T23:54:59.609939Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:55:14.108488Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/app/[locale]/layout.tsx")}
+2025-09-13T23:55:14.108522Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:55:25.309493Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/app/[locale]/layout.tsx")}
+2025-09-13T23:55:25.309863Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:55:42.910853Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/app/globals.css")}
+2025-09-13T23:55:42.911002Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:55:53.008873Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/next.config.js"), AnchoredSystemPathBuf("frontend/src/i18n/request.ts"), AnchoredSystemPathBuf("frontend/app/[locale]/page.tsx"), AnchoredSystemPathBuf("frontend/src/components/ui/index.ts"), AnchoredSystemPathBuf("frontend/app/[locale]/layout.tsx"), AnchoredSystemPathBuf("frontend/app/[locale]/settings/page.tsx"), AnchoredSystemPathBuf("frontend/src/components/LanguageSwitcher.tsx"), AnchoredSystemPathBuf("frontend/src/components/ui/Button.tsx"), AnchoredSystemPathBuf("frontend/messages/ru.json"), AnchoredSystemPathBuf("frontend/app/globals.css"), AnchoredSystemPathBuf("frontend/src/middleware.ts"), AnchoredSystemPathBuf("frontend/src/components/ui/Input.tsx"), AnchoredSystemPathBuf("frontend/app/[locale]/search/page.tsx"), AnchoredSystemPathBuf("frontend/src/components/SearchBar.tsx"), AnchoredSystemPathBuf("frontend/src/components/ui/Card.tsx"), AnchoredSystemPathBuf("frontend/src/components/ui/Modal.tsx"), AnchoredSystemPathBuf("frontend/messages/en.json"), AnchoredSystemPathBuf("frontend/app/[locale]/about/page.tsx"), AnchoredSystemPathBuf("frontend/src/components/Navigation.tsx")}
+2025-09-13T23:55:53.008932Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:55:53.052870Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-09-13T23:57:01.610574Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/app/page.tsx")}
+2025-09-13T23:57:01.611158Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:57:02.007691Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/app/page.tsx")}
+2025-09-13T23:57:02.007725Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:57:21.706214Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/app/[locale]/page.tsx")}
+2025-09-13T23:57:21.706233Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:57:27.707256Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/app/[locale]/page.tsx")}
+2025-09-13T23:57:27.707356Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:58:48.312281Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/i18n/request.ts")}
+2025-09-13T23:58:48.312735Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:59:00.904728Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/src/i18n/request.ts")}
+2025-09-13T23:59:00.904776Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:59:22.504456Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/app/simple/page.tsx"), AnchoredSystemPathBuf("frontend/app/simple")}
+2025-09-13T23:59:22.504480Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:59:22.703686Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/app/simple/page.tsx")}
+2025-09-13T23:59:22.703696Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:59:53.403931Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("frontend/app/simple/page.tsx"), AnchoredSystemPathBuf("frontend/src/i18n/request.ts"), AnchoredSystemPathBuf("frontend/app/[locale]/page.tsx"), AnchoredSystemPathBuf("frontend/app/page.tsx")}
+2025-09-13T23:59:53.403968Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@science-map/frontend"), path: AnchoredSystemPathBuf("frontend") }}))
+2025-09-13T23:59:53.411101Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun

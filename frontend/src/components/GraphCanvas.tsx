@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect } from 'react';
 import * as d3 from 'd3';
 import { GraphNode, GraphEdge, GraphData, PhysicsConfig } from '../types';
 
@@ -9,13 +9,11 @@ interface GraphCanvasProps {
   physicsConfig: PhysicsConfig;
   onGraphUpdate: (data: GraphData) => void;
   isLoading: boolean;
+  onNodeClick?: (nodeId: string) => void;
 }
 
-export function GraphCanvas({ graphData, physicsConfig, onGraphUpdate, isLoading }: GraphCanvasProps) {
+export function GraphCanvas({ graphData, physicsConfig, onGraphUpdate, isLoading, onNodeClick }: GraphCanvasProps) {
   const svgRef = useRef<SVGSVGElement>(null);
-  const [isSimulating, setIsSimulating] = useState(false);
-  const [temperature, setTemperature] = useState(1000);
-  const [fps, setFps] = useState(0);
   const simulationRef = useRef<d3.Simulation<GraphNode, GraphEdge> | null>(null);
 
   // Инициализация D3 графа
@@ -100,6 +98,11 @@ export function GraphCanvas({ graphData, physicsConfig, onGraphUpdate, isLoading
       .attr('stroke', '#fff')
       .attr('stroke-width', 2)
       .style('cursor', 'pointer')
+      .on('click', (event, d) => {
+        if (onNodeClick) {
+          onNodeClick(d.id);
+        }
+      })
       .call(d3.drag<SVGCircleElement, GraphNode>()
         .on('start', dragstarted)
         .on('drag', dragged)
@@ -157,24 +160,11 @@ export function GraphCanvas({ graphData, physicsConfig, onGraphUpdate, isLoading
         .attr('y', d => d.y!);
     });
 
-    // Запускаем симуляцию
-    setIsSimulating(true);
-    setTemperature(1000);
-
-    // Симуляция охлаждения температуры
-    const coolingInterval = setInterval(() => {
-      setTemperature(prev => {
-        const newTemp = prev * physicsConfig.coolingRate;
-        return newTemp < physicsConfig.minTemperature ? physicsConfig.minTemperature : newTemp;
-      });
-    }, 100);
-
     // Очистка при размонтировании
     return () => {
       if (simulationRef.current) {
         simulationRef.current.stop();
       }
-      clearInterval(coolingInterval);
     };
 
   }, [graphData, physicsConfig]);
@@ -199,19 +189,6 @@ export function GraphCanvas({ graphData, physicsConfig, onGraphUpdate, isLoading
     }
   };
 
-  const startSimulation = useCallback(() => {
-    if (simulationRef.current) {
-      simulationRef.current.alpha(1).restart();
-      setIsSimulating(true);
-    }
-  }, []);
-
-  const stopSimulation = useCallback(() => {
-    if (simulationRef.current) {
-      simulationRef.current.stop();
-      setIsSimulating(false);
-    }
-  }, []);
 
   // Обработка изменения размера
   useEffect(() => {
@@ -232,22 +209,6 @@ export function GraphCanvas({ graphData, physicsConfig, onGraphUpdate, isLoading
 
   return (
     <div>
-      <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-        <button 
-          onClick={isSimulating ? stopSimulation : startSimulation}
-          className="button"
-        >
-          {isSimulating ? 'Остановить' : 'Запустить'} симуляцию
-        </button>
-        
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          <span>Температура: <strong>{temperature.toFixed(1)}</strong></span>
-          <span>FPS: <strong>{fps}</strong></span>
-          <span>Узлов: <strong>{graphData.nodes.length}</strong></span>
-          <span>Связей: <strong>{graphData.edges.length}</strong></span>
-        </div>
-      </div>
-      
       <svg
         ref={svgRef}
         className="graph-canvas"
@@ -259,13 +220,6 @@ export function GraphCanvas({ graphData, physicsConfig, onGraphUpdate, isLoading
           Обновление данных...
         </div>
       )}
-      
-      <div style={{ marginTop: '1rem', fontSize: '0.9rem', color: '#666' }}>
-        <p><strong>Управление:</strong></p>
-        <p>• Перетаскивание узлов - клик и перетаскивание</p>
-        <p>• Панорамирование - клик и перетаскивание по пустому месту</p>
-        <p>• Масштабирование - колесо мыши</p>
-      </div>
     </div>
   );
 }
