@@ -1,4 +1,10 @@
-import { isValidEmail, isValidUUID, isValidUrl, sanitizeString, validatePagination } from './validation';
+import {
+  isValidEmail,
+  isValidUUID,
+  isValidUrl,
+  sanitizeString,
+  validatePagination,
+} from './validation';
 
 describe('Validation Utils', () => {
   describe('isValidEmail', () => {
@@ -46,7 +52,9 @@ describe('Validation Utils', () => {
   describe('sanitizeString', () => {
     it('should sanitize strings', () => {
       expect(sanitizeString('  test  ')).toBe('test');
-      expect(sanitizeString('test<script>alert("xss")</script>')).toBe('testscriptalert("xss")/script');
+      expect(sanitizeString('test<script>alert("xss")</script>')).toBe(
+        'testscriptalert("xss")/script',
+      );
     });
   });
 

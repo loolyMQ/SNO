@@ -30,7 +30,7 @@ class SimpleTracer {
       operationName,
       startTime: Date.now(),
       tags: {},
-      logs: []
+      logs: [],
     };
 
     this.spans.set(spanId, span);
@@ -60,7 +60,7 @@ class SimpleTracer {
       span.logs = span.logs || [];
       span.logs.push({
         timestamp: Date.now(),
-        fields
+        fields,
       });
     }
   }
@@ -70,15 +70,17 @@ class SimpleTracer {
   }
 
   private logSpan(span: TraceSpan): void {
-    console.log(JSON.stringify({
-      type: 'span',
-      spanId: span.id,
-      parentId: span.parentId,
-      operationName: span.operationName,
-      duration: span.endTime! - span.startTime,
-      tags: span.tags,
-      logs: span.logs
-    }));
+    console.log(
+      JSON.stringify({
+        type: 'span',
+        spanId: span.id,
+        parentId: span.parentId,
+        operationName: span.operationName,
+        duration: span.endTime! - span.startTime,
+        tags: span.tags,
+        logs: span.logs,
+      }),
+    );
   }
 }
 

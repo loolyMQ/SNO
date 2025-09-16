@@ -15,16 +15,44 @@
     "start": "turbo run start",
     "clean": "turbo run clean",
     "lint": "turbo run lint",
-    "test": "turbo run test"
+    "lint:fix": "turbo run lint:fix",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "type-check": "turbo run type-check",
+    "test": "turbo run test",
+    "prepare": "husky install",
+    "docker:build": "./scripts/docker-build.sh",
+    "docker:deploy": "./scripts/docker-deploy.sh",
+    "docker:dev": "docker-compose -f infrastructure/docker-compose.dev.yml up -d",
+    "docker:prod": "docker-compose -f infrastructure/docker-compose.prod.yml up -d",
+    "docker:stop": "docker-compose -f infrastructure/docker-compose.prod.yml down",
+    "docker:logs": "docker-compose -f infrastructure/docker-compose.prod.yml logs -f"
   },
   "devDependencies": {
+    "@types/node": "^20.8.0",
+    "@typescript-eslint/eslint-plugin": "^8.44.0",
+    "@typescript-eslint/parser": "^8.44.0",
+    "eslint": "^8.0.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-import": "^2.32.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.6",
+    "prettier": "^3.6.2",
     "turbo": "^1.10.12",
-    "typescript": "^5.2.2",
-    "@types/node": "^20.8.0"
+    "typescript": "^5.2.2"
   },
   "packageManager": "pnpm@8.10.0",
   "engines": {
     "node": ">=18.0.0",
     "pnpm": ">=8.0.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
   }
 }

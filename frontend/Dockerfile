@@ -1,46 +1,58 @@
-FROM node:18-alpine AS base
+# Multi-stage build for Frontend
+FROM node:18-alpine AS builder
 
-# Устанавливаем pnpm
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY pnpm-lock.yaml ./
+
+# Install pnpm
 RUN npm install -g pnpm
 
-WORKDIR /app
-
-# Копируем файлы конфигурации
-COPY package.json pnpm-lock.yaml* ./
-COPY ../../shared/package.json ../../shared/
-COPY ../../package.json ../../pnpm-workspace.yaml ../../
-
-# Устанавливаем зависимости
+# Install dependencies
 RUN pnpm install --frozen-lockfile
 
-# Копируем исходный код
+# Copy source code
 COPY . .
-COPY ../../shared ../../shared
 
-# Собираем приложение
-RUN pnpm build
+# Build the application
+RUN pnpm run build
 
 # Production stage
-FROM node:18-alpine AS runner
+FROM node:18-alpine AS production
+
 WORKDIR /app
 
-ENV NODE_ENV production
+# Install pnpm
+RUN npm install -g pnpm
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# Copy package files
+COPY package*.json ./
+COPY pnpm-lock.yaml ./
 
-COPY --from=base /app/public ./public
+# Install only production dependencies
+RUN pnpm install --frozen-lockfile --prod
 
-# Автоматически используем output traces для уменьшения размера образа
-# https://nextjs.org/docs/advanced-features/output-file-tracing
-COPY --from=base --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=base --chown=nextjs:nodejs /app/.next/static ./.next/static
+# Copy built application
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/next.config.js ./
 
-USER nextjs
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nodejs -u 1001
 
+# Change ownership
+RUN chown -R nodejs:nodejs /app
+USER nodejs
+
+# Expose port
 EXPOSE 3000
 
-ENV PORT 3000
-ENV HOSTNAME "0.0.0.0"
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3000', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
 
-CMD ["node", "server.js"]
+# Start the application
+CMD ["pnpm", "start"]

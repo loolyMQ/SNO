@@ -1,7 +1,9 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { useGraphPhysics } from '../hooks/useGraphPhysics';
+
 import { useGraphInteractivity } from '../hooks/useGraphInteractivity';
-import { GraphNode, GraphEdge, GraphTransform } from '../types';
+import { useGraphPhysics } from '../hooks/useGraphPhysics';
+
+import type { GraphNode, GraphEdge } from '../types';
 
 export interface InteractiveGraphProps {
   nodes: GraphNode[];
@@ -30,29 +32,17 @@ export const InteractiveGraph: React.FC<InteractiveGraphProps> = ({
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Инициализация физики графа
-  const {
-    startSimulation,
-    stopSimulation,
-    resetSimulation,
-    heatUp,
-    pinNode,
-    unpinNode,
-    isNodePinned,
-    updateNodePosition,
-    positions,
-    temperature,
-    fps,
-    config: physicsConfig,
-  } = useGraphPhysics({
-    nodes,
-    edges,
-    onUpdate: useCallback((newPositions: Map<string, { x: number; y: number }>) => {
-      // Обновляем позиции узлов для рендеринга
-      if (canvasRef.current) {
-        renderGraph();
-      }
-    }, []),
-  });
+  const { resetSimulation, heatUp, isNodePinned, updateNodePosition, positions, temperature, fps } =
+    useGraphPhysics({
+      nodes,
+      edges,
+      onUpdate: useCallback((_newPositions: Map<string, { x: number; y: number }>) => {
+        // Обновляем позиции узлов для рендеринга
+        if (canvasRef.current) {
+          renderGraph();
+        }
+      }, []),
+    });
 
   // Инициализация интерактивности
   const {
@@ -64,18 +54,14 @@ export const InteractiveGraph: React.FC<InteractiveGraphProps> = ({
     handleMouseMove,
     handleMouseUp,
     handleWheel,
-    handleNodeClick,
-    handleEdgeClick,
-    handleNodeHover,
-    handleEdgeHover,
   } = useGraphInteractivity({
     nodes,
     edges,
     positions,
-    onNodeClick,
-    onEdgeClick,
-    onNodeHover,
-    onEdgeHover,
+    onNodeClick: onNodeClick || (() => {}),
+    onEdgeClick: onEdgeClick || (() => {}),
+    onNodeHover: onNodeHover || (() => {}),
+    onEdgeHover: onEdgeHover || (() => {}),
     updateNodePosition,
   });
 
@@ -96,16 +82,16 @@ export const InteractiveGraph: React.FC<InteractiveGraphProps> = ({
     ctx.scale(transform.scale, transform.scale);
 
     // Рендерим рёбра
-    edges.forEach(edge => {
+    edges.forEach((edge) => {
       const sourcePos = positions.get(edge.source);
       const targetPos = positions.get(edge.target);
-      
+
       if (!sourcePos || !targetPos) return;
 
       ctx.beginPath();
       ctx.moveTo(sourcePos.x, sourcePos.y);
       ctx.lineTo(targetPos.x, targetPos.y);
-      
+
       // Стиль рёбер
       if (hoveredEdge === edge.id) {
         ctx.strokeStyle = '#ff6b6b';
@@ -114,18 +100,18 @@ export const InteractiveGraph: React.FC<InteractiveGraphProps> = ({
         ctx.strokeStyle = '#ddd';
         ctx.lineWidth = 1;
       }
-      
+
       ctx.stroke();
     });
 
     // Рендерим узлы
-    nodes.forEach(node => {
+    nodes.forEach((node) => {
       const pos = positions.get(node.id);
       if (!pos) return;
 
       ctx.beginPath();
       ctx.arc(pos.x, pos.y, 8, 0, Math.PI * 2);
-      
+
       // Стиль узлов
       if (selectedNode === node.id) {
         ctx.fillStyle = '#007bff';
@@ -134,9 +120,9 @@ export const InteractiveGraph: React.FC<InteractiveGraphProps> = ({
       } else {
         ctx.fillStyle = '#666';
       }
-      
+
       ctx.fill();
-      
+
       // Обводка для закреплённых узлов
       if (isNodePinned(node.id)) {
         ctx.strokeStyle = '#ffc107';
@@ -146,7 +132,18 @@ export const InteractiveGraph: React.FC<InteractiveGraphProps> = ({
     });
 
     ctx.restore();
-  }, [nodes, edges, positions, transform, selectedNode, hoveredNode, hoveredEdge, isNodePinned, width, height]);
+  }, [
+    nodes,
+    edges,
+    positions,
+    transform,
+    selectedNode,
+    hoveredNode,
+    hoveredEdge,
+    isNodePinned,
+    width,
+    height,
+  ]);
 
   // Инициализация canvas
   useEffect(() => {
@@ -174,7 +171,7 @@ export const InteractiveGraph: React.FC<InteractiveGraphProps> = ({
     handleMouseMove(e);
   };
 
-  const handleCanvasMouseUp = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const handleCanvasMouseUp = (_e: React.MouseEvent<HTMLCanvasElement>) => {
     handleMouseUp();
   };
 
@@ -198,7 +195,7 @@ export const InteractiveGraph: React.FC<InteractiveGraphProps> = ({
         onMouseUp={handleCanvasMouseUp}
         onWheel={handleCanvasWheel}
       />
-      
+
       {/* Панель управления */}
       <div
         className="graph-controls"
@@ -217,20 +214,28 @@ export const InteractiveGraph: React.FC<InteractiveGraphProps> = ({
       >
         <button onClick={resetSimulation}>Сброс</button>
         <button onClick={heatUp}>Нагреть</button>
-        <button onClick={() => {
-          // Центрирование графа
-          const canvas = canvasRef.current;
-          if (canvas) {
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
-            // Здесь можно добавить логику центрирования
-          }
-        }}>Центр</button>
-        <button onClick={() => {
-          // Очистка выбора
-          // Здесь можно добавить логику очистки выбора
-        }}>Очистить выбор</button>
-        
+        <button
+          onClick={() => {
+            // Центрирование графа
+            const canvas = canvasRef.current;
+            if (canvas) {
+              // const centerX = canvas.width / 2;
+              // const centerY = canvas.height / 2;
+              // Здесь можно добавить логику центрирования
+            }
+          }}
+        >
+          Центр
+        </button>
+        <button
+          onClick={() => {
+            // Очистка выбора
+            // Здесь можно добавить логику очистки выбора
+          }}
+        >
+          Очистить выбор
+        </button>
+
         {/* Информация о симуляции */}
         <div style={{ fontSize: '12px', color: '#666' }}>
           <div>FPS: {fps}</div>

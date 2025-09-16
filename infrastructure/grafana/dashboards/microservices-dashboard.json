@@ -1,0 +1,99 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Science Map - Microservices Dashboard",
+    "tags": ["science-map", "microservices"],
+    "style": "dark",
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "API Gateway - Request Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{service=\"api-gateway\"}[5m])",
+            "legendFormat": "{{method}} {{endpoint}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Requests/sec",
+            "min": 0
+          }
+        ],
+        "xAxis": {
+          "mode": "time"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": 2,
+        "title": "Graph Service - Node Count",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "graph_nodes_total{service=\"graph-service\"}",
+            "legendFormat": "Total Nodes"
+          }
+        ],
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 12,
+          "y": 0
+        }
+      },
+      {
+        "id": 3,
+        "title": "Search Service - Query Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(search_queries_total{service=\"search-service\"}[5m])",
+            "legendFormat": "Queries/sec"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Queries/sec",
+            "min": 0
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 4
+        }
+      },
+      {
+        "id": 4,
+        "title": "Service Health Status",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "up{job=~\"(api-gateway|graph-service|search-service|auth-service|jobs-service)\"}",
+            "legendFormat": "{{job}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 12
+        }
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "5s"
+  }
+}

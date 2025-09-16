@@ -1,6 +1,6 @@
 'use client';
 
-import { PhysicsConfig } from '../types';
+import type { PhysicsConfig } from '../types';
 
 interface ControlsPanelProps {
   physicsConfig: PhysicsConfig;
@@ -16,7 +16,7 @@ export function ControlsPanel({ physicsConfig, onConfigChange, onReload }: Contr
   return (
     <div className="graph-container">
       <h3>Настройки физики</h3>
-      
+
       <div className="controls">
         <div className="control-group">
           <label>Отталкивание</label>

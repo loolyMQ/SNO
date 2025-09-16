@@ -61,80 +61,92 @@ let isSimulating = false;
 
 // Kafka клиент
 const kafkaClient = new KafkaClient({
+  port: 3002,
   kafka: {
     clientId: 'graph-service',
     brokers: ['localhost:9092'],
-    groupId: 'graph-service-group'
-  }
+    groupId: 'graph-service-group',
+  },
 });
 
 // Простая физика
 function updatePhysics() {
   if (!isSimulating) return;
-  
+
   // Адаптивное охлаждение в зависимости от размера графа
-  const adaptiveCoolingRate = Math.max(0.90, 1 - (currentData.nodes.length / 1000));
+  const adaptiveCoolingRate = Math.max(0.9, 1 - currentData.nodes.length / 1000);
   temperature = Math.max(0.1, temperature * adaptiveCoolingRate);
-  
+
   // Инициализация случайных позиций если все узлы в (0,0)
-  const allAtOrigin = currentData.nodes.every(node => node.x === 0 && node.y === 0);
+  const allAtOrigin = currentData.nodes.every((node) => node.x === 0 && node.y === 0);
   if (allAtOrigin) {
-    currentData.nodes.forEach(node => {
+    currentData.nodes.forEach((node) => {
       node.x = (Math.random() - 0.5) * 400;
       node.y = (Math.random() - 0.5) * 400;
       node.vx = (Math.random() - 0.5) * 2;
       node.vy = (Math.random() - 0.5) * 2;
     });
   }
-  
+
   // Применение сил
   const nodes = currentData.nodes;
-  
+
   // Отталкивание между узлами
   for (let i = 0; i < nodes.length; i++) {
     for (let j = i + 1; j < nodes.length; j++) {
       const nodeA = nodes[i];
       const nodeB = nodes[j];
-      
-      if (nodeA.x !== undefined && nodeA.y !== undefined && 
-          nodeB.x !== undefined && nodeB.y !== undefined) {
-        
+
+      if (
+        nodeA?.x !== undefined &&
+        nodeA?.y !== undefined &&
+        nodeB?.x !== undefined &&
+        nodeB?.y !== undefined
+      ) {
         const dx = nodeB.x - nodeA.x;
         const dy = nodeB.y - nodeA.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        
+
         if (dist > 0) {
           const force = 200 / (dist * dist);
           const fx = (dx / dist) * force;
           const fy = (dy / dist) * force;
-          
-          nodeA.vx = (nodeA.vx || 0) - fx;
-          nodeA.vy = (nodeA.vy || 0) - fy;
-          nodeB.vx = (nodeB.vx || 0) + fx;
-          nodeB.vy = (nodeB.vy || 0) + fy;
+
+          if (nodeA) {
+            nodeA.vx = (nodeA.vx || 0) - fx;
+            nodeA.vy = (nodeA.vy || 0) - fy;
+          }
+          if (nodeB) {
+            nodeB.vx = (nodeB.vx || 0) + fx;
+            nodeB.vy = (nodeB.vy || 0) + fy;
+          }
         }
       }
     }
   }
-  
+
   // Притяжение по связям
-  currentData.edges.forEach(edge => {
-    const sourceNode = nodes.find(n => n.id === edge.source);
-    const targetNode = nodes.find(n => n.id === edge.target);
-    
-    if (sourceNode && targetNode && 
-        sourceNode.x !== undefined && sourceNode.y !== undefined &&
-        targetNode.x !== undefined && targetNode.y !== undefined) {
-      
+  currentData.edges.forEach((edge) => {
+    const sourceNode = nodes.find((n) => n.id === edge.source);
+    const targetNode = nodes.find((n) => n.id === edge.target);
+
+    if (
+      sourceNode &&
+      targetNode &&
+      sourceNode.x !== undefined &&
+      sourceNode.y !== undefined &&
+      targetNode.x !== undefined &&
+      targetNode.y !== undefined
+    ) {
       const dx = targetNode.x - sourceNode.x;
       const dy = targetNode.y - sourceNode.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      
+
       if (dist > 100) {
         const force = 0.1 * (dist - 100);
         const fx = (dx / dist) * force;
         const fy = (dy / dist) * force;
-        
+
         sourceNode.vx = (sourceNode.vx || 0) + fx;
         sourceNode.vy = (sourceNode.vy || 0) + fy;
         targetNode.vx = (targetNode.vx || 0) - fx;
@@ -142,31 +154,32 @@ function updatePhysics() {
       }
     }
   });
-  
+
   // Обновление позиций
-  nodes.forEach(node => {
+  nodes.forEach((node) => {
     if (node.x !== undefined && node.y !== undefined) {
       node.vx = (node.vx || 0) * 0.9; // Демпфирование
       node.vy = (node.vy || 0) * 0.9;
-      
+
       node.x += (node.vx || 0) * (temperature / 1000);
       node.y += (node.vy || 0) * (temperature / 1000);
     }
   });
-  
+
   // Публикуем событие обновления графа в Kafka (асинхронно)
   setImmediate(async () => {
     try {
       await kafkaClient.publishEvent('graph-updates', {
         id: `graph-update-${Date.now()}`,
         type: 'GRAPH_UPDATED',
+        source: 'graph-service',
         data: {
           nodeCount: currentData.nodes.length,
           edgeCount: currentData.edges.length,
           temperature,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         },
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
     } catch (error) {
       console.error('Ошибка публикации в Kafka:', error);
@@ -265,26 +278,26 @@ app.get('/api/categories', (req, res) => {
       id: 'science-map',
       name: 'Карта науки',
       description: 'Визуализация научных связей и исследований',
-      connections: ['lectures', 'category3', 'category4']
+      connections: ['lectures', 'category3', 'category4'],
     },
     {
       id: 'lectures',
       name: 'Депозитарий лекций',
       description: 'Архив лекций и образовательных материалов',
-      connections: ['science-map', 'category3', 'category4']
+      connections: ['science-map', 'category3', 'category4'],
     },
     {
       id: 'category3',
       name: '',
       description: 'Категория 3',
-      connections: ['science-map', 'lectures', 'category4']
+      connections: ['science-map', 'lectures', 'category4'],
     },
     {
       id: 'category4',
       name: '',
       description: 'Категория 4',
-      connections: ['science-map', 'lectures', 'category3']
-    }
+      connections: ['science-map', 'lectures', 'category3'],
+    },
   ];
 
   res.json({
@@ -304,26 +317,26 @@ app.get('/api/categories/:categoryId/topics', (req, res) => {
       { id: 'topic2', title: 'Нейронные сети', description: 'Архитектуры нейросетей' },
       { id: 'topic3', title: 'Глубокое обучение', description: 'Deep Learning методы' },
       { id: 'topic4', title: 'Искусственный интеллект', description: 'Общие принципы ИИ' },
-      { id: 'topic5', title: 'Наука о данных', description: 'Data Science подходы' }
+      { id: 'topic5', title: 'Наука о данных', description: 'Data Science подходы' },
     ],
-    'lectures': [
+    lectures: [
       { id: 'lecture1', title: 'Введение в программирование', description: 'Базовые концепции' },
       { id: 'lecture2', title: 'Алгоритмы и структуры данных', description: 'Основы алгоритмики' },
       { id: 'lecture3', title: 'Базы данных', description: 'SQL и NoSQL' },
       { id: 'lecture4', title: 'Веб-разработка', description: 'Frontend и Backend' },
-      { id: 'lecture5', title: 'Мобильная разработка', description: 'iOS и Android' }
+      { id: 'lecture5', title: 'Мобильная разработка', description: 'iOS и Android' },
     ],
-    'category3': [
+    category3: [
       { id: 'item1', title: 'Элемент 1', description: 'Описание элемента 1' },
       { id: 'item2', title: 'Элемент 2', description: 'Описание элемента 2' },
-      { id: 'item3', title: 'Элемент 3', description: 'Описание элемента 3' }
+      { id: 'item3', title: 'Элемент 3', description: 'Описание элемента 3' },
     ],
-    'category4': [
+    category4: [
       { id: 'data1', title: 'Данные 1', description: 'Описание данных 1' },
       { id: 'data2', title: 'Данные 2', description: 'Описание данных 2' },
       { id: 'data3', title: 'Данные 3', description: 'Описание данных 3' },
-      { id: 'data4', title: 'Данные 4', description: 'Описание данных 4' }
-    ]
+      { id: 'data4', title: 'Данные 4', description: 'Описание данных 4' },
+    ],
   };
 
   const topics = topicsData[categoryId] || [];
@@ -341,88 +354,94 @@ app.get('/api/topics/:topicId/connections', (req, res) => {
 
   // Моковые данные связей для каждой темы
   const connectionsData: { [key: string]: any } = {
-    'topic1': {
+    topic1: {
       topic: { id: 'topic1', title: 'Машинное обучение', description: 'Алгоритмы и методы МО' },
       connections: [
         { id: 'topic2', title: 'Нейронные сети', type: 'related' },
         { id: 'topic3', title: 'Глубокое обучение', type: 'related' },
-        { id: 'topic4', title: 'Искусственный интеллект', type: 'parent' }
-      ]
+        { id: 'topic4', title: 'Искусственный интеллект', type: 'parent' },
+      ],
     },
-    'topic2': {
+    topic2: {
       topic: { id: 'topic2', title: 'Нейронные сети', description: 'Архитектуры нейросетей' },
       connections: [
         { id: 'topic1', title: 'Машинное обучение', type: 'related' },
         { id: 'topic3', title: 'Глубокое обучение', type: 'parent' },
-        { id: 'topic4', title: 'Искусственный интеллект', type: 'parent' }
-      ]
+        { id: 'topic4', title: 'Искусственный интеллект', type: 'parent' },
+      ],
     },
-    'topic3': {
+    topic3: {
       topic: { id: 'topic3', title: 'Глубокое обучение', description: 'Deep Learning методы' },
       connections: [
         { id: 'topic1', title: 'Машинное обучение', type: 'related' },
         { id: 'topic2', title: 'Нейронные сети', type: 'child' },
-        { id: 'topic4', title: 'Искусственный интеллект', type: 'parent' }
-      ]
+        { id: 'topic4', title: 'Искусственный интеллект', type: 'parent' },
+      ],
     },
-    'topic4': {
+    topic4: {
       topic: { id: 'topic4', title: 'Искусственный интеллект', description: 'Общие принципы ИИ' },
       connections: [
         { id: 'topic1', title: 'Машинное обучение', type: 'child' },
         { id: 'topic2', title: 'Нейронные сети', type: 'child' },
         { id: 'topic3', title: 'Глубокое обучение', type: 'child' },
-        { id: 'topic5', title: 'Наука о данных', type: 'related' }
-      ]
+        { id: 'topic5', title: 'Наука о данных', type: 'related' },
+      ],
     },
-    'topic5': {
+    topic5: {
       topic: { id: 'topic5', title: 'Наука о данных', description: 'Data Science подходы' },
       connections: [
         { id: 'topic1', title: 'Машинное обучение', type: 'related' },
-        { id: 'topic4', title: 'Искусственный интеллект', type: 'related' }
-      ]
+        { id: 'topic4', title: 'Искусственный интеллект', type: 'related' },
+      ],
     },
-    'lecture1': {
-      topic: { id: 'lecture1', title: 'Введение в программирование', description: 'Базовые концепции' },
+    lecture1: {
+      topic: {
+        id: 'lecture1',
+        title: 'Введение в программирование',
+        description: 'Базовые концепции',
+      },
       connections: [
         { id: 'lecture2', title: 'Алгоритмы и структуры данных', type: 'next' },
-        { id: 'lecture3', title: 'Базы данных', type: 'related' }
-      ]
+        { id: 'lecture3', title: 'Базы данных', type: 'related' },
+      ],
     },
-    'lecture2': {
-      topic: { id: 'lecture2', title: 'Алгоритмы и структуры данных', description: 'Основы алгоритмики' },
+    lecture2: {
+      topic: {
+        id: 'lecture2',
+        title: 'Алгоритмы и структуры данных',
+        description: 'Основы алгоритмики',
+      },
       connections: [
         { id: 'lecture1', title: 'Введение в программирование', type: 'previous' },
         { id: 'lecture3', title: 'Базы данных', type: 'next' },
-        { id: 'lecture4', title: 'Веб-разработка', type: 'related' }
-      ]
+        { id: 'lecture4', title: 'Веб-разработка', type: 'related' },
+      ],
     },
-    'lecture3': {
+    lecture3: {
       topic: { id: 'lecture3', title: 'Базы данных', description: 'SQL и NoSQL' },
       connections: [
         { id: 'lecture1', title: 'Введение в программирование', type: 'related' },
         { id: 'lecture2', title: 'Алгоритмы и структуры данных', type: 'previous' },
-        { id: 'lecture4', title: 'Веб-разработка', type: 'next' }
-      ]
+        { id: 'lecture4', title: 'Веб-разработка', type: 'next' },
+      ],
     },
-    'lecture4': {
+    lecture4: {
       topic: { id: 'lecture4', title: 'Веб-разработка', description: 'Frontend и Backend' },
       connections: [
         { id: 'lecture2', title: 'Алгоритмы и структуры данных', type: 'related' },
         { id: 'lecture3', title: 'Базы данных', type: 'previous' },
-        { id: 'lecture5', title: 'Мобильная разработка', type: 'related' }
-      ]
+        { id: 'lecture5', title: 'Мобильная разработка', type: 'related' },
+      ],
     },
-    'lecture5': {
+    lecture5: {
       topic: { id: 'lecture5', title: 'Мобильная разработка', description: 'iOS и Android' },
-      connections: [
-        { id: 'lecture4', title: 'Веб-разработка', type: 'related' }
-      ]
-    }
+      connections: [{ id: 'lecture4', title: 'Веб-разработка', type: 'related' }],
+    },
   };
 
   const topicData = connectionsData[topicId] || {
     topic: { id: topicId, title: `Тема ${topicId}`, description: 'Описание темы' },
-    connections: []
+    connections: [],
   };
 
   res.json({
@@ -431,7 +450,6 @@ app.get('/api/topics/:topicId/connections', (req, res) => {
     timestamp: Date.now(),
   });
 });
-
 
 // Главная страница
 app.get('/', (req, res) => {

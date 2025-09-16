@@ -22,10 +22,12 @@ const config: ServiceConfig = {
 // Middleware
 app.use(helmet());
 app.use(compression());
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true,
+  }),
+);
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
@@ -45,11 +47,7 @@ app.get('/', (req, res) => {
       service: 'Search Service',
       version: '1.0.0',
       status: 'running',
-      endpoints: [
-        'GET /api/health',
-        'POST /api/search',
-        'GET /api/search/history',
-      ],
+      endpoints: ['GET /api/health', 'POST /api/search', 'GET /api/search/history'],
     },
     timestamp: Date.now(),
   });
@@ -58,7 +56,7 @@ app.get('/', (req, res) => {
 // Обработка ошибок
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Search Service Error:', err);
-  
+
   res.status(err.status || 500).json({
     success: false,
     error: process.env.NODE_ENV === 'production' ? 'Внутренняя ошибка сервера' : err.message,
@@ -80,13 +78,13 @@ async function startServer() {
   try {
     await kafkaClient.connect();
     console.log('✅ Kafka клиент подключен');
-    
+
     // Подписка на события поиска
     await kafkaClient.subscribeToTopic('search-queries', async (event) => {
       console.log('🔍 Получено событие поиска:', event.type);
       // Здесь можно добавить логику обработки событий
     });
-    
+
     app.listen(PORT, () => {
       console.log(`🚀 Search Service запущен на порту ${PORT}`);
       console.log(`📊 Health check: http://localhost:${PORT}/api/health`);

@@ -7,11 +7,12 @@ const PORT = process.env.PORT || 3005;
 
 // Kafka клиент
 const kafkaClient = new KafkaClient({
+  port: 3005,
   kafka: {
     clientId: 'jobs-service',
     brokers: ['localhost:9092'],
-    groupId: 'jobs-service-group'
-  }
+    groupId: 'jobs-service-group',
+  },
 });
 
 // Middleware
@@ -35,7 +36,7 @@ let jobs: Job[] = [
     status: 'completed',
     data: { processed: 100 },
     createdAt: Date.now() - 3600000,
-    updatedAt: Date.now() - 3000000
+    updatedAt: Date.now() - 3000000,
   },
   {
     id: 'job-2',
@@ -43,8 +44,8 @@ let jobs: Job[] = [
     status: 'running',
     data: { progress: 50 },
     createdAt: Date.now() - 1800000,
-    updatedAt: Date.now() - 600000
-  }
+    updatedAt: Date.now() - 600000,
+  },
 ];
 
 // Routes
@@ -65,10 +66,10 @@ app.get('/api/jobs', (req, res) => {
     data: {
       jobs,
       total: jobs.length,
-      pending: jobs.filter(j => j.status === 'pending').length,
-      running: jobs.filter(j => j.status === 'running').length,
-      completed: jobs.filter(j => j.status === 'completed').length,
-      failed: jobs.filter(j => j.status === 'failed').length,
+      pending: jobs.filter((j) => j.status === 'pending').length,
+      running: jobs.filter((j) => j.status === 'running').length,
+      completed: jobs.filter((j) => j.status === 'completed').length,
+      failed: jobs.filter((j) => j.status === 'failed').length,
     },
     timestamp: Date.now(),
   });
@@ -76,36 +77,37 @@ app.get('/api/jobs', (req, res) => {
 
 app.post('/api/jobs', (req, res) => {
   const { type, data } = req.body;
-  
+
   const newJob: Job = {
     id: `job-${Date.now()}`,
     type,
     status: 'pending',
     data,
     createdAt: Date.now(),
-    updatedAt: Date.now()
+    updatedAt: Date.now(),
   };
-  
+
   jobs.push(newJob);
-  
+
   // Публикуем событие создания задачи
   setImmediate(async () => {
     try {
       await kafkaClient.publishEvent('job-events', {
         id: `job-created-${Date.now()}`,
         type: 'JOB_CREATED',
+        source: 'jobs-service',
         data: {
           jobId: newJob.id,
           jobType: newJob.type,
-          status: newJob.status
+          status: newJob.status,
         },
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
     } catch (error) {
       console.error('Ошибка публикации события создания задачи:', error);
     }
   });
-  
+
   res.json({
     success: true,
     data: newJob,

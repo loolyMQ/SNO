@@ -1,6 +1,7 @@
 'use client';
 
-import { InputHTMLAttributes, forwardRef } from 'react';
+import { forwardRef } from 'react';
+import type { InputHTMLAttributes } from 'react';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -11,7 +12,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ className = '', label, error, helperText, id, ...props }, ref) => {
     const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`;
-    
+
     const inputClasses = `
       flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm 
       placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 
@@ -19,7 +20,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       ${error ? 'border-red-500 focus:ring-red-500' : ''}
       ${className}
     `.trim();
-    
+
     return (
       <div className="w-full">
         {label && (
@@ -27,21 +28,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             {label}
           </label>
         )}
-        <input
-          ref={ref}
-          id={inputId}
-          className={inputClasses}
-          {...props}
-        />
-        {error && (
-          <p className="mt-1 text-sm text-red-600">{error}</p>
-        )}
-        {helperText && !error && (
-          <p className="mt-1 text-sm text-gray-500">{helperText}</p>
-        )}
+        <input ref={ref} id={inputId} className={inputClasses} {...props} />
+        {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+        {helperText && !error && <p className="mt-1 text-sm text-gray-500">{helperText}</p>}
       </div>
     );
-  }
+  },
 );
 
 Input.displayName = 'Input';

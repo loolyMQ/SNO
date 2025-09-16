@@ -65,7 +65,7 @@ import { initializeTracing, createMetricsServer } from '@platform/monitoring';
 const sdk = initializeTracing({
   serviceName: 'my-service',
   serviceVersion: '1.0.0',
-  environment: 'development'
+  environment: 'development',
 });
 
 // Запуск метрик сервера
@@ -100,7 +100,7 @@ import { ApiResponse, GraphNode, User } from '@platform/types';
 const response: ApiResponse<User> = {
   success: true,
   data: user,
-  timestamp: Date.now()
+  timestamp: Date.now(),
 };
 ```
 

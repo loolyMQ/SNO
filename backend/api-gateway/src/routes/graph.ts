@@ -1,8 +1,8 @@
-import { Router } from 'express';
+import { Router, type Request, type Response } from 'express';
 import axios from 'axios';
 import { ApiResponse, GraphData } from '@science-map/shared';
 
-const router = Router();
+const router: Router = Router();
 
 // Получение данных графа
 router.get('/', async (req, res) => {
@@ -21,13 +21,13 @@ router.get('/', async (req, res) => {
     res.json(response);
   } catch (error: any) {
     console.error('Graph error:', error);
-    
+
     const response: ApiResponse = {
       success: false,
       error: error.response?.data?.error || 'Ошибка получения данных графа',
       timestamp: Date.now(),
     };
-    
+
     res.status(error.response?.status || 500).json(response);
   }
 });
@@ -36,7 +36,7 @@ router.get('/', async (req, res) => {
 router.post('/update', async (req, res) => {
   try {
     const graphData: GraphData = req.body;
-    
+
     // Валидация данных
     if (!graphData.nodes || !Array.isArray(graphData.nodes)) {
       const response: ApiResponse = {
@@ -70,14 +70,15 @@ router.post('/update', async (req, res) => {
     res.json(response);
   } catch (error: any) {
     console.error('Graph update error:', error);
-    
+
     const response: ApiResponse = {
       success: false,
       error: error.response?.data?.error || 'Ошибка обновления данных графа',
       timestamp: Date.now(),
     };
-    
+
     res.status(error.response?.status || 500).json(response);
+    return;
   }
 });
 
@@ -98,14 +99,15 @@ router.get('/stats', async (req, res) => {
     res.json(response);
   } catch (error: any) {
     console.error('Graph stats error:', error);
-    
+
     const response: ApiResponse = {
       success: false,
       error: 'Ошибка получения статистики графа',
       timestamp: Date.now(),
     };
-    
+
     res.status(500).json(response);
+    return;
   }
 });
 

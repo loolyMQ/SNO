@@ -1,14 +1,14 @@
-import { Router } from 'express';
+import { Router, type Request, type Response } from 'express';
 import axios from 'axios';
 import { ApiResponse, SearchRequest, SearchResponse } from '@science-map/shared';
 
-const router = Router();
+const router: Router = Router();
 
 // Проксирование запросов к search-service
 router.post('/', async (req, res) => {
   try {
     const searchRequest: SearchRequest = req.body;
-    
+
     // Валидация запроса
     if (!searchRequest.query || typeof searchRequest.query !== 'string') {
       const response: ApiResponse = {
@@ -34,14 +34,15 @@ router.post('/', async (req, res) => {
     res.json(response);
   } catch (error: any) {
     console.error('Search error:', error);
-    
+
     const response: ApiResponse = {
       success: false,
       error: error.response?.data?.error || 'Ошибка поиска',
       timestamp: Date.now(),
     };
-    
+
     res.status(error.response?.status || 500).json(response);
+    return;
   }
 });
 
@@ -62,14 +63,15 @@ router.get('/history', async (req, res) => {
     res.json(response);
   } catch (error: any) {
     console.error('History error:', error);
-    
+
     const response: ApiResponse = {
       success: false,
       error: 'Ошибка получения истории поиска',
       timestamp: Date.now(),
     };
-    
+
     res.status(500).json(response);
+    return;
   }
 });
 

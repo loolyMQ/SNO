@@ -1,6 +1,6 @@
 export function pick<T extends object, K extends keyof T>(obj: T, keys: K[]): Pick<T, K> {
   const result = {} as Pick<T, K>;
-  keys.forEach(key => {
+  keys.forEach((key) => {
     if (key in obj) {
       result[key] = obj[key];
     }
@@ -10,7 +10,7 @@ export function pick<T extends object, K extends keyof T>(obj: T, keys: K[]): Pi
 
 export function omit<T extends object, K extends keyof T>(obj: T, keys: K[]): Omit<T, K> {
   const result = { ...obj };
-  keys.forEach(key => {
+  keys.forEach((key) => {
     delete result[key];
   });
   return result;
@@ -18,7 +18,7 @@ export function omit<T extends object, K extends keyof T>(obj: T, keys: K[]): Om
 
 export function deepMerge<T extends Record<string, any>>(target: T, source: Partial<T>): T {
   const result = { ...target };
-  
+
   for (const key in source) {
     if (source.hasOwnProperty(key)) {
       if (
@@ -35,7 +35,7 @@ export function deepMerge<T extends Record<string, any>>(target: T, source: Part
       }
     }
   }
-  
+
   return result;
 }
 
@@ -48,7 +48,7 @@ export function isEmpty(obj: any): boolean {
 
 export function hasOwnProperty<T extends object, K extends PropertyKey>(
   obj: T,
-  prop: K
+  prop: K,
 ): obj is T & Record<K, unknown> {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }

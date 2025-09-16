@@ -53,7 +53,7 @@ async function startServer() {
   try {
     await kafkaClient.connect();
     console.log('✅ Auth Service Kafka подключен');
-    
+
     app.listen(PORT, () => {
       console.log(`🚀 Auth Service запущен на порту ${PORT}`);
     });

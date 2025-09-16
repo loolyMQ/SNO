@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+
 import { Button, Input } from './ui';
 
 interface SearchBarProps {
@@ -36,11 +37,7 @@ export function SearchBar({ onSearch, isLoading }: SearchBarProps) {
           disabled={isLoading}
           className="flex-1"
         />
-        <Button 
-          type="submit" 
-          disabled={isLoading || !query.trim()}
-          loading={isLoading}
-        >
+        <Button type="submit" disabled={isLoading || !query.trim()} loading={isLoading}>
           {isLoading ? 'Поиск...' : 'Найти'}
         </Button>
       </form>

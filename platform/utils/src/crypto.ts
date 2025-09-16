@@ -12,7 +12,11 @@ export function hashString(input: string, algorithm: string = 'sha256'): string 
   return createHash(algorithm).update(input).digest('hex');
 }
 
-export function createHmacSignature(data: string, secret: string, algorithm: string = 'sha256'): string {
+export function createHmacSignature(
+  data: string,
+  secret: string,
+  algorithm: string = 'sha256',
+): string {
   return createHmac(algorithm, secret).update(data).digest('hex');
 }
 

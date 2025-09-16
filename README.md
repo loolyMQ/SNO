@@ -7,6 +7,7 @@
 Проект состоит из следующих компонентов:
 
 ### Backend сервисы
+
 - **API Gateway** (порт 3000) - единая точка входа для всех API запросов
 - **Graph Service** (порт 3002) - управление данными графа и физикой
 - **Search Service** (порт 3001) - поиск по научным данным
@@ -14,9 +15,11 @@
 - **Jobs Service** (порт 3005) - фоновые задачи
 
 ### Frontend
+
 - **Next.js приложение** (порт 3000) - веб-интерфейс с интерактивным графом
 
 ### Инфраструктура
+
 - **Kafka** - межсервисное взаимодействие
 - **Redis** - кэширование
 - **Prometheus** - мониторинг метрик
@@ -68,6 +71,7 @@ pnpm dev
 ## API Endpoints
 
 ### Graph Service
+
 - `GET /api/graph` - получение данных графа
 - `POST /api/graph/update` - обновление данных графа
 - `GET /api/graph/stats` - статистика графа
@@ -76,10 +80,12 @@ pnpm dev
 - `POST /api/graph/physics/reset` - сброс физики
 
 ### Search Service
+
 - `POST /api/search` - поиск по данным
 - `GET /api/search/history` - история поиска
 
 ### Health Checks
+
 - `GET /api/health` - проверка состояния сервиса
 
 ## Физика графа
@@ -126,9 +132,11 @@ pnpm dev
 ## Troubleshooting
 
 ### Проблемы с портами
+
 Если порты заняты, измените их в соответствующих файлах конфигурации.
 
 ### Проблемы с Kafka
+
 ```bash
 # Проверка статуса Kafka
 docker-compose logs kafka
@@ -138,6 +146,7 @@ docker-compose restart kafka
 ```
 
 ### Проблемы с зависимостями
+
 ```bash
 # Очистка и переустановка
 rm -rf node_modules pnpm-lock.yaml

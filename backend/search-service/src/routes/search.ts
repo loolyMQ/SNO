@@ -1,7 +1,7 @@
-import { Router } from 'express';
+import { Router, type Request, type Response } from 'express';
 import { ApiResponse, SearchRequest, SearchResponse, GraphData } from '@science-map/shared';
 
-const router = Router();
+const router: Router = Router();
 
 // История поиска (в памяти для простоты)
 const searchHistory: Array<{ query: string; timestamp: number; results: number }> = [];
@@ -38,7 +38,7 @@ const mockData: GraphData = {
 router.post('/', (req, res) => {
   try {
     const searchRequest: SearchRequest = req.body;
-    
+
     // Валидация запроса
     if (!searchRequest.query || typeof searchRequest.query !== 'string') {
       const response: ApiResponse = {
@@ -50,28 +50,24 @@ router.post('/', (req, res) => {
     }
 
     const startTime = Date.now();
-    
+
     // Простой поиск по меткам узлов
     const query = searchRequest.query.toLowerCase();
-    const filteredNodes = mockData.nodes.filter(node => 
-      node.label.toLowerCase().includes(query)
-    );
+    const filteredNodes = mockData.nodes.filter((node) => node.label.toLowerCase().includes(query));
 
     // Находим связанные узлы
-    const relatedNodeIds = new Set(filteredNodes.map(node => node.id));
-    const relatedEdges = mockData.edges.filter(edge => 
-      relatedNodeIds.has(edge.source) || relatedNodeIds.has(edge.target)
+    const relatedNodeIds = new Set(filteredNodes.map((node) => node.id));
+    const relatedEdges = mockData.edges.filter(
+      (edge) => relatedNodeIds.has(edge.source) || relatedNodeIds.has(edge.target),
     );
 
     // Добавляем связанные узлы
-    relatedEdges.forEach(edge => {
+    relatedEdges.forEach((edge) => {
       relatedNodeIds.add(edge.source);
       relatedNodeIds.add(edge.target);
     });
 
-    const allRelatedNodes = mockData.nodes.filter(node => 
-      relatedNodeIds.has(node.id)
-    );
+    const allRelatedNodes = mockData.nodes.filter((node) => relatedNodeIds.has(node.id));
 
     const searchResults: GraphData = {
       nodes: allRelatedNodes,
@@ -108,14 +104,15 @@ router.post('/', (req, res) => {
     res.json(response);
   } catch (error: any) {
     console.error('Search error:', error);
-    
+
     const response: ApiResponse = {
       success: false,
       error: 'Ошибка поиска',
       timestamp: Date.now(),
     };
-    
+
     res.status(500).json(response);
+    return;
   }
 });
 
@@ -123,9 +120,7 @@ router.post('/', (req, res) => {
 router.get('/history', (req, res) => {
   try {
     const limit = parseInt(req.query.limit as string) || 20;
-    const recentHistory = searchHistory
-      .slice(-limit)
-      .reverse();
+    const recentHistory = searchHistory.slice(-limit).reverse();
 
     const response: ApiResponse = {
       success: true,
@@ -139,13 +134,13 @@ router.get('/history', (req, res) => {
     res.json(response);
   } catch (error: any) {
     console.error('History error:', error);
-    
+
     const response: ApiResponse = {
       success: false,
       error: 'Ошибка получения истории поиска',
       timestamp: Date.now(),
     };
-    
+
     res.status(500).json(response);
   }
 });
@@ -162,14 +157,15 @@ router.get('/all', (req, res) => {
     res.json(response);
   } catch (error: any) {
     console.error('All data error:', error);
-    
+
     const response: ApiResponse = {
       success: false,
       error: 'Ошибка получения данных',
       timestamp: Date.now(),
     };
-    
+
     res.status(500).json(response);
+    return;
   }
 });
 

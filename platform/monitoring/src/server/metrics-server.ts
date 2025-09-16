@@ -16,9 +16,9 @@ export function createMetricsServer(port: number = 9091): App {
         close: (cb: () => void) => {
           console.log('Metrics server stopped');
           cb();
-        }
+        },
       };
-    }
+    },
   };
 
   app.get('/metrics', async (req: any, res: any) => {

@@ -24,10 +24,12 @@ const config: ServiceConfig = {
 // Middleware
 app.use(helmet());
 app.use(compression());
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true,
+  }),
+);
 
 // Rate limiting
 const limiter = rateLimit({
@@ -71,13 +73,13 @@ app.get('/', (req, res) => {
 // Обработка ошибок
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('API Gateway Error:', err);
-  
+
   const response: ApiResponse = {
     success: false,
     error: process.env.NODE_ENV === 'production' ? 'Внутренняя ошибка сервера' : err.message,
     timestamp: Date.now(),
   };
-  
+
   res.status(err.status || 500).json(response);
 });
 
@@ -96,7 +98,7 @@ async function startServer() {
   try {
     await kafkaClient.connect();
     console.log('✅ Kafka клиент подключен');
-    
+
     app.listen(PORT, () => {
       console.log(`🚀 API Gateway запущен на порту ${PORT}`);
       console.log(`📊 Health check: http://localhost:${PORT}/api/health`);

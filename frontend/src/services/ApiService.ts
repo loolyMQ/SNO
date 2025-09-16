@@ -1,5 +1,6 @@
 import axios from 'axios';
-import { GraphData } from '../types';
+
+import type { GraphData } from '../types';
 
 interface ApiResponse<T = any> {
   success: boolean;
@@ -27,7 +28,7 @@ export class ApiService {
   async getGraphData(): Promise<GraphData> {
     try {
       const response = await axios.get<ApiResponse<GraphData>>(`${this.baseUrl}/api/graph`);
-      
+
       if (!response.data.success) {
         throw new Error(response.data.error || 'Ошибка получения данных графа');
       }
@@ -42,7 +43,7 @@ export class ApiService {
   async updateGraphData(data: GraphData): Promise<void> {
     try {
       const response = await axios.post<ApiResponse>(`${this.baseUrl}/api/graph/update`, data);
-      
+
       if (!response.data.success) {
         throw new Error(response.data.error || 'Ошибка обновления данных графа');
       }
@@ -55,7 +56,7 @@ export class ApiService {
   async getGraphStats(): Promise<any> {
     try {
       const response = await axios.get<ApiResponse>(`${this.baseUrl}/api/graph/stats`);
-      
+
       if (!response.data.success) {
         throw new Error(response.data.error || 'Ошибка получения статистики');
       }
@@ -76,9 +77,9 @@ export class ApiService {
 
       const response = await axios.post<ApiResponse<SearchResponse>>(
         `${this.baseUrl}/api/search`,
-        searchRequest
+        searchRequest,
       );
-      
+
       if (!response.data.success) {
         throw new Error(response.data.error || 'Ошибка поиска');
       }
@@ -93,7 +94,7 @@ export class ApiService {
   async startSimulation(): Promise<void> {
     try {
       const response = await axios.post<ApiResponse>(`${this.baseUrl}/api/graph/simulation/start`);
-      
+
       if (!response.data.success) {
         throw new Error(response.data.error || 'Ошибка запуска симуляции');
       }
@@ -106,7 +107,7 @@ export class ApiService {
   async stopSimulation(): Promise<void> {
     try {
       const response = await axios.post<ApiResponse>(`${this.baseUrl}/api/graph/simulation/stop`);
-      
+
       if (!response.data.success) {
         throw new Error(response.data.error || 'Ошибка остановки симуляции');
       }
@@ -119,7 +120,7 @@ export class ApiService {
   async resetPhysics(): Promise<void> {
     try {
       const response = await axios.post<ApiResponse>(`${this.baseUrl}/api/graph/physics/reset`);
-      
+
       if (!response.data.success) {
         throw new Error(response.data.error || 'Ошибка сброса физики');
       }
@@ -131,8 +132,10 @@ export class ApiService {
 
   async getCategoryTopics(categoryId: string): Promise<any> {
     try {
-      const response = await axios.get<ApiResponse>(`${this.baseUrl}/api/categories/${categoryId}/topics`);
-      
+      const response = await axios.get<ApiResponse>(
+        `${this.baseUrl}/api/categories/${categoryId}/topics`,
+      );
+
       if (!response.data.success) {
         throw new Error(response.data.error || 'Ошибка получения тем категории');
       }
@@ -147,7 +150,7 @@ export class ApiService {
   async getCategories(): Promise<any> {
     try {
       const response = await axios.get<ApiResponse>(`${this.baseUrl}/api/categories`);
-      
+
       if (!response.data.success) {
         throw new Error(response.data.error || 'Ошибка получения категорий');
       }
@@ -161,8 +164,10 @@ export class ApiService {
 
   async getTopicConnections(topicId: string): Promise<any> {
     try {
-      const response = await axios.get<ApiResponse>(`${this.baseUrl}/api/topics/${topicId}/connections`);
-      
+      const response = await axios.get<ApiResponse>(
+        `${this.baseUrl}/api/topics/${topicId}/connections`,
+      );
+
       if (!response.data.success) {
         throw new Error(response.data.error || 'Ошибка получения связей темы');
       }

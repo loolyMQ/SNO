@@ -39,6 +39,6 @@ export function getTimeAgo(date: Date): string {
   if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} мин назад`;
   if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} ч назад`;
   if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)} дн назад`;
-  
+
   return formatDate(date, 'DD.MM.YYYY');
 }

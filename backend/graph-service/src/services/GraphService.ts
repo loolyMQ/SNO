@@ -1,4 +1,11 @@
-import { GraphNode, GraphEdge, GraphData, GraphPhysics, PhysicsConfig, ApiResponse } from '@science-map/shared';
+import {
+  GraphNode,
+  GraphEdge,
+  GraphData,
+  GraphPhysics,
+  PhysicsConfig,
+  ApiResponse,
+} from '@science-map/shared';
 
 export class GraphService {
   private physics: GraphPhysics;
@@ -41,11 +48,11 @@ export class GraphService {
     this.nodes.clear();
     this.edges.clear();
 
-    data.nodes.forEach(node => {
+    data.nodes.forEach((node) => {
       this.nodes.set(node.id, { ...node });
     });
 
-    data.edges.forEach(edge => {
+    data.edges.forEach((edge) => {
       this.edges.set(edge.id, { ...edge });
     });
 
@@ -65,16 +72,16 @@ export class GraphService {
     this.isSimulating = true;
     this.simulationInterval = setInterval(() => {
       this.physics.updatePhysics();
-      
+
       // Обновляем позиции узлов
       const updatedNodes = this.physics.getNodes();
-      updatedNodes.forEach(node => {
+      updatedNodes.forEach((node) => {
         const existingNode = this.nodes.get(node.id);
-        if (existingNode) {
+        if (existingNode && node.x !== undefined && node.y !== undefined) {
           existingNode.x = node.x;
           existingNode.y = node.y;
-          existingNode.vx = node.vx;
-          existingNode.vy = node.vy;
+          if (node.vx !== undefined) existingNode.vx = node.vx;
+          if (node.vy !== undefined) existingNode.vy = node.vy;
         }
       });
     }, 16); // ~60 FPS

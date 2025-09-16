@@ -16,7 +16,7 @@ export class HealthChecker {
       try {
         const check = await checkFn();
         checks.push(check);
-        
+
         if (check.status === 'unhealthy') {
           overallStatus = 'unhealthy';
         } else if (check.status === 'degraded' && overallStatus === 'healthy') {
@@ -44,8 +44,8 @@ export class HealthChecker {
 }
 
 // Стандартные проверки здоровья
-export const createDatabaseHealthCheck = (connectionFn: () => Promise<boolean>) => 
-  async (): Promise<HealthCheck> => {
+export const createDatabaseHealthCheck =
+  (connectionFn: () => Promise<boolean>) => async (): Promise<HealthCheck> => {
     try {
       const isConnected = await connectionFn();
       return {
@@ -64,23 +64,22 @@ export const createDatabaseHealthCheck = (connectionFn: () => Promise<boolean>) 
     }
   };
 
-export const createKafkaHealthCheck = (kafkaClient: any) =>
-  async (): Promise<HealthCheck> => {
-    try {
-      // Проверяем подключение к Kafka
-      const isConnected = kafkaClient && kafkaClient.isConnected?.();
-      return {
-        name: 'kafka',
-        status: isConnected ? 'healthy' : 'unhealthy',
-        message: isConnected ? 'Kafka connection is healthy' : 'Kafka connection failed',
-        timestamp: new Date(),
-      };
-    } catch (error) {
-      return {
-        name: 'kafka',
-        status: 'unhealthy',
-        message: error instanceof Error ? error.message : 'Kafka check failed',
-        timestamp: new Date(),
-      };
-    }
-  };
+export const createKafkaHealthCheck = (kafkaClient: any) => async (): Promise<HealthCheck> => {
+  try {
+    // Проверяем подключение к Kafka
+    const isConnected = kafkaClient && kafkaClient.isConnected?.();
+    return {
+      name: 'kafka',
+      status: isConnected ? 'healthy' : 'unhealthy',
+      message: isConnected ? 'Kafka connection is healthy' : 'Kafka connection failed',
+      timestamp: new Date(),
+    };
+  } catch (error) {
+    return {
+      name: 'kafka',
+      status: 'unhealthy',
+      message: error instanceof Error ? error.message : 'Kafka check failed',
+      timestamp: new Date(),
+    };
+  }
+};

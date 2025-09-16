@@ -19,14 +19,14 @@ class SimpleLogger implements Logger {
     const timestamp = new Date().toISOString();
     const service = this.config.service || 'science-map';
     const env = this.config.environment || 'development';
-    
+
     const logEntry = {
       timestamp,
       level,
       service,
       environment: env,
       message,
-      ...data
+      ...data,
     };
 
     return JSON.stringify(logEntry);
@@ -65,7 +65,7 @@ export const errorLogger = createLogger({ service: 'error', level: 'error' });
 export function createHttpLoggingMiddleware(logger: Logger = httpLogger) {
   return (req: any, res: any, next: any) => {
     const start = Date.now();
-    
+
     logger.info('HTTP request started', {
       method: req.method,
       url: req.url,
@@ -75,7 +75,7 @@ export function createHttpLoggingMiddleware(logger: Logger = httpLogger) {
 
     res.on('finish', () => {
       const duration = Date.now() - start;
-      
+
       logger.info('HTTP request completed', {
         method: req.method,
         url: req.url,

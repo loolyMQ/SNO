@@ -18,7 +18,7 @@ export interface NextFunction {
 export function metricsMiddleware(req: Request, res: Response, next: NextFunction) {
   const startTime = Date.now();
   const route = req.url;
-  
+
   // Измеряем размер запроса
   const contentLength = req.get('content-length');
   if (contentLength) {
@@ -29,16 +29,18 @@ export function metricsMiddleware(req: Request, res: Response, next: NextFunctio
   // Перехватываем завершение ответа
   res.on('finish', () => {
     const duration = (Date.now() - startTime) / 1000;
-    
-    console.log(JSON.stringify({
-      type: 'http_request',
-      method: req.method,
-      route,
-      statusCode: res.statusCode,
-      duration,
-      userAgent: req.get('User-Agent'),
-      ip: req.ip,
-    }));
+
+    console.log(
+      JSON.stringify({
+        type: 'http_request',
+        method: req.method,
+        route,
+        statusCode: res.statusCode,
+        duration,
+        userAgent: req.get('User-Agent'),
+        ip: req.ip,
+      }),
+    );
   });
 
   next();

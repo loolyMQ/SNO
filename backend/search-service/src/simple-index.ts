@@ -7,11 +7,12 @@ const PORT = process.env.PORT || 3003;
 
 // Kafka клиент
 const kafkaClient = new KafkaClient({
+  port: 3001,
   kafka: {
     clientId: 'search-service',
     brokers: ['localhost:9092'],
-    groupId: 'search-service-group'
-  }
+    groupId: 'search-service-group',
+  },
 });
 
 // Middleware
@@ -34,22 +35,22 @@ const searchData: SearchResult[] = [
     title: 'Machine Learning in Scientific Research',
     type: 'paper',
     relevance: 0.95,
-    metadata: { year: 2023, citations: 150 }
+    metadata: { year: 2023, citations: 150 },
   },
   {
     id: '2',
     title: 'Dr. John Smith',
     type: 'author',
     relevance: 0.88,
-    metadata: { institution: 'MIT', papers: 45 }
+    metadata: { institution: 'MIT', papers: 45 },
   },
   {
     id: '3',
     title: 'Stanford University',
     type: 'institution',
     relevance: 0.92,
-    metadata: { country: 'USA', researchers: 2000 }
-  }
+    metadata: { country: 'USA', researchers: 2000 },
+  },
 ];
 
 // Routes
@@ -66,37 +67,38 @@ app.get('/api/health', (req, res) => {
 
 app.post('/api/search', (req, res) => {
   const { query, filters } = req.body;
-  
+
   // Простой поиск по заголовкам
-  const results = searchData.filter(item => 
-    item.title.toLowerCase().includes(query.toLowerCase())
+  const results = searchData.filter((item) =>
+    item.title.toLowerCase().includes(query.toLowerCase()),
   );
-  
+
   // Публикуем событие поиска
   setImmediate(async () => {
     try {
       await kafkaClient.publishEvent('search-events', {
         id: `search-${Date.now()}`,
         type: 'SEARCH_QUERY',
+        source: 'search-service',
         data: {
           query,
           resultsCount: results.length,
-          filters
+          filters,
         },
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
     } catch (error) {
       console.error('Ошибка публикации события поиска:', error);
     }
   });
-  
+
   res.json({
     success: true,
     data: {
       results,
       total: results.length,
       query,
-      executionTime: Math.random() * 100
+      executionTime: Math.random() * 100,
     },
     timestamp: Date.now(),
   });

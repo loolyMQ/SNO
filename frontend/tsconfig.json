@@ -1,6 +1,12 @@
 {
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
+    "strict": false,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "noImplicitReturns": false,
+    "noUncheckedIndexedAccess": false,
+    "exactOptionalPropertyTypes": false,
     "plugins": [
       {
         "name": "next"

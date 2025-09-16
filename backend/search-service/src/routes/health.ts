@@ -1,7 +1,7 @@
-import { Router } from 'express';
+import { Router, type Request, type Response } from 'express';
 import { ApiResponse } from '@science-map/shared';
 
-const router = Router();
+const router: Router = Router();
 
 router.get('/', (req, res) => {
   const response: ApiResponse = {
@@ -16,13 +16,13 @@ router.get('/', (req, res) => {
     },
     timestamp: Date.now(),
   };
-  
+
   res.json(response);
 });
 
 router.get('/ready', (req, res) => {
   const isReady = true;
-  
+
   const response: ApiResponse = {
     success: true,
     data: {
@@ -32,7 +32,7 @@ router.get('/ready', (req, res) => {
     },
     timestamp: Date.now(),
   };
-  
+
   res.status(isReady ? 200 : 503).json(response);
 });
 

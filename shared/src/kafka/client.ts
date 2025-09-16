@@ -30,20 +30,22 @@ export class KafkaClient {
   async publishEvent(topic: string, event: KafkaEvent): Promise<void> {
     await this.producer.send({
       topic,
-      messages: [{
-        key: event.id,
-        value: JSON.stringify(event),
-        timestamp: event.timestamp.toString(),
-      }],
+      messages: [
+        {
+          key: event.id,
+          value: JSON.stringify(event),
+          timestamp: event.timestamp.toString(),
+        },
+      ],
     });
   }
 
   async subscribeToTopic(
     topic: string,
-    handler: (event: KafkaEvent) => Promise<void>
+    handler: (event: KafkaEvent) => Promise<void>,
   ): Promise<void> {
     await this.consumer.subscribe({ topic, fromBeginning: false });
-    
+
     await this.consumer.run({
       eachMessage: async ({ topic, partition, message }: EachMessagePayload) => {
         try {

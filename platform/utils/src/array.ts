@@ -12,23 +12,26 @@ export function unique<T>(array: T[]): T[] {
 
 export function groupBy<T, K extends string | number | symbol>(
   array: T[],
-  keyFn: (item: T) => K
+  keyFn: (item: T) => K,
 ): Record<K, T[]> {
-  return array.reduce((groups, item) => {
-    const key = keyFn(item);
-    if (!groups[key]) {
-      groups[key] = [];
-    }
-    groups[key].push(item);
-    return groups;
-  }, {} as Record<K, T[]>);
+  return array.reduce(
+    (groups, item) => {
+      const key = keyFn(item);
+      if (!groups[key]) {
+        groups[key] = [];
+      }
+      groups[key].push(item);
+      return groups;
+    },
+    {} as Record<K, T[]>,
+  );
 }
 
 export function sortBy<T>(array: T[], keyFn: (item: T) => any, order: 'asc' | 'desc' = 'asc'): T[] {
   return [...array].sort((a, b) => {
     const aVal = keyFn(a);
     const bVal = keyFn(b);
-    
+
     if (aVal < bVal) return order === 'asc' ? -1 : 1;
     if (aVal > bVal) return order === 'asc' ? 1 : -1;
     return 0;

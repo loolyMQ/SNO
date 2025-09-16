@@ -8,11 +8,12 @@ const PORT = process.env.PORT || 3000;
 
 // Kafka клиент
 const kafkaClient = new KafkaClient({
+  port: 3000,
   kafka: {
     clientId: 'api-gateway',
     brokers: ['localhost:9092'],
-    groupId: 'api-gateway-group'
-  }
+    groupId: 'api-gateway-group',
+  },
 });
 
 // Middleware
@@ -210,20 +211,21 @@ async function initializeKafka() {
 // Middleware для публикации событий API
 app.use((req, res, next) => {
   const originalSend = res.send;
-  res.send = function(data) {
+  res.send = function (data) {
     // Публикуем событие о запросе
     setImmediate(async () => {
       try {
         await kafkaClient.publishEvent('api-requests', {
           id: `api-request-${Date.now()}-${Math.random()}`,
           type: 'API_REQUEST',
+          source: 'api-gateway',
           data: {
             method: req.method,
             path: req.path,
             statusCode: res.statusCode,
-            timestamp: Date.now()
+            timestamp: Date.now(),
           },
-          timestamp: Date.now()
+          timestamp: Date.now(),
         });
       } catch (error) {
         console.error('Ошибка публикации API события:', error);
