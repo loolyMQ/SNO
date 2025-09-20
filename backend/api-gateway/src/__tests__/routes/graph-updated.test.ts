@@ -4,7 +4,7 @@ import { graphRoutes } from '../../routes/graph';
 
 // Мокаем axios
 jest.mock('axios');
-const axios = require('axios');
+import axios from 'axios';
 
 // Создаем тестовое приложение
 const app = express();

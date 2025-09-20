@@ -1,39 +1,34 @@
-'use client';
+import React from 'react';
 
-import { forwardRef } from 'react';
-import type { InputHTMLAttributes } from 'react';
-
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
-  error?: string;
-  helperText?: string;
+export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  variant?: 'default' | 'error' | 'success';
+  size?: 'sm' | 'md' | 'lg';
 }
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className = '', label, error, helperText, id, ...props }, ref) => {
-    const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`;
+export function Input({
+  className = '',
+  variant = 'default',
+  size = 'md',
+  ...props
+}: InputProps) {
+  const baseClasses = 'border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent';
+  
+  const variantClasses = {
+    default: 'border-gray-300',
+    error: 'border-red-500 focus:ring-red-500',
+    success: 'border-green-500 focus:ring-green-500',
+  };
+  
+  const sizeClasses = {
+    sm: 'px-2 py-1 text-sm',
+    md: 'px-3 py-2 text-base',
+    lg: 'px-4 py-3 text-lg',
+  };
 
-    const inputClasses = `
-      flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm 
-      placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 
-      focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50
-      ${error ? 'border-red-500 focus:ring-red-500' : ''}
-      ${className}
-    `.trim();
-
-    return (
-      <div className="w-full">
-        {label && (
-          <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 mb-1">
-            {label}
-          </label>
-        )}
-        <input ref={ref} id={inputId} className={inputClasses} {...props} />
-        {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
-        {helperText && !error && <p className="mt-1 text-sm text-gray-500">{helperText}</p>}
-      </div>
-    );
-  },
-);
-
-Input.displayName = 'Input';
+  return (
+    <input
+      className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      {...props}
+    />
+  );
+}

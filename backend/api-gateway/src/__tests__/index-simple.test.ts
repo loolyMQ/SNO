@@ -26,7 +26,7 @@ const createTestApp = () => {
   app.use('/api/health', healthRoutes);
   
   // Error handling middleware
-  app.use((err: any, req: any, res: any, next: any) => {
+        app.use((err: any, _req: any, _res: any, _next: any) => {
     console.error('Error:', err);
     res.status(500).json({
       success: false,
@@ -155,7 +155,7 @@ describe('API Gateway Main Application', () => {
         throw new Error('Test error');
       });
       
-      errorApp.use((err: any, req: any, res: any, next: any) => {
+           errorApp.use((err: any, _req: any, _res: any, _next: any) => {
         console.error('Error:', err);
         res.status(500).json({
           success: false,

@@ -4,7 +4,7 @@ import { healthRoutes } from '../../routes/health';
 
 // Мокаем axios для внешних сервисов
 jest.mock('axios');
-const axios = require('axios');
+// const axios = require('axios');
 
 // Создаем тестовое приложение только с health роутом
 const app = express();

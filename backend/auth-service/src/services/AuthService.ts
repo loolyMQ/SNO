@@ -36,7 +36,7 @@ export class AuthService {
   verifyToken(token: string): TokenPayload {
     try {
       return jwt.verify(token, this.jwtSecret) as TokenPayload;
-    } catch (error) {
+    } catch (_error) {
       throw new Error('Invalid token');
     }
   }
@@ -54,10 +54,10 @@ export class AuthService {
     return emailRegex.test(email);
   }
 
-  validatePassword(password: string): boolean {
+  validatePassword(_password: string): boolean {
     // Password must be at least 8 characters, contain uppercase, lowercase, number, and special character
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
-    return passwordRegex.test(password);
+    return passwordRegex.test(_password);
   }
 
   generateRefreshToken(user: User): string {

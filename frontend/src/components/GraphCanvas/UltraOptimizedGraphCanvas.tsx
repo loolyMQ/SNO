@@ -12,7 +12,7 @@ import { useGraphVirtualization } from './hooks/useGraphVirtualization';
 import { useOptimizedD3Simulation } from './hooks/useOptimizedD3Simulation';
 import { PerformancePanel } from './PerformancePanel';
 
-import type { GraphNode, GraphEdge, GraphData, PhysicsConfig } from '../../types';
+import type { GraphNode, GraphData, PhysicsConfig } from '../../types';
 
 interface UltraOptimizedGraphCanvasProps {
   graphData: GraphData;
@@ -37,7 +37,7 @@ interface ViewportBounds {
 
 export function UltraOptimizedGraphCanvas({
   graphData,
-  physicsConfig,
+  physicsConfig: _physicsConfig,
   onGraphUpdate: _onGraphUpdate,
   isLoading,
   onNodeClick,

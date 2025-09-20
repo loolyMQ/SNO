@@ -7,6 +7,8 @@ import { createKafkaClient, ServiceConfig, ApiResponse } from '@science-map/shar
 import { searchRoutes } from './routes/search';
 import { graphRoutes } from './routes/graph';
 import { healthRoutes } from './routes/health';
+import { authRoutes } from './routes/auth';
+import { requestLogger, errorHandler } from './middleware/auth';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,6 +26,7 @@ const config: ServiceConfig = {
 // Middleware
 app.use(helmet());
 app.use(compression());
+app.use(requestLogger);
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
@@ -47,6 +50,7 @@ const kafkaClient = createKafkaClient(config);
 
 // Routes
 app.use('/api/health', healthRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/graph', graphRoutes);
 
@@ -71,17 +75,7 @@ app.get('/', (req, res) => {
 });
 
 // Обработка ошибок
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('API Gateway Error:', err);
-
-  const response: ApiResponse = {
-    success: false,
-    error: process.env.NODE_ENV === 'production' ? 'Внутренняя ошибка сервера' : err.message,
-    timestamp: Date.now(),
-  };
-
-  res.status(err.status || 500).json(response);
-});
+app.use(errorHandler);
 
 // 404 handler
 app.use('*', (req, res) => {
