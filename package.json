@@ -20,6 +20,7 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "type-check": "turbo run type-check",
     "test": "turbo run test",
+    "test:coverage": "turbo run test:coverage",
     "prepare": "husky install",
     "docker:build": "./scripts/docker-build.sh",
     "docker:deploy": "./scripts/docker-deploy.sh",
