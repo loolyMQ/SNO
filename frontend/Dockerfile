@@ -3,9 +3,10 @@ FROM node:18-alpine
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci
 
-COPY src/ ./src/
+COPY . .
+RUN npm run build
 
 EXPOSE 3000
 
