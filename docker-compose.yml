@@ -1,15 +1,119 @@
 version: '3.8'
 
 services:
+  # Infrastructure
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "9101:9101"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: localhost
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infrastructure/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-storage:/var/lib/grafana
+
+  # Backend Services
   api-gateway:
     build: ./backend/api-gateway
     ports:
-      - "3001:3000"
+      - "3001:3001"
     environment:
       - NODE_ENV=production
-      - PORT=3000
+      - PORT=3001
+      - AUTH_SERVICE_URL=http://auth-service:3003
+      - GRAPH_SERVICE_URL=http://graph-service:3002
+      - SEARCH_SERVICE_URL=http://search-service:3004
+      - JOBS_SERVICE_URL=http://jobs-service:3005
+    depends_on:
+      - kafka
     restart: unless-stopped
 
+  auth-service:
+    build: ./backend/auth-service
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=production
+      - PORT=3003
+      - KAFKA_BROKER=kafka:29092
+    depends_on:
+      - kafka
+    restart: unless-stopped
+
+  graph-service:
+    build: ./backend/graph-service
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=production
+      - PORT=3002
+      - KAFKA_BROKER=kafka:29092
+    depends_on:
+      - kafka
+    restart: unless-stopped
+
+  search-service:
+    build: ./backend/search-service
+    ports:
+      - "3004:3004"
+    environment:
+      - NODE_ENV=production
+      - PORT=3004
+      - KAFKA_BROKER=kafka:29092
+    depends_on:
+      - kafka
+    restart: unless-stopped
+
+  jobs-service:
+    build: ./backend/jobs-service
+    ports:
+      - "3005:3005"
+    environment:
+      - NODE_ENV=production
+      - PORT=3005
+      - KAFKA_BROKER=kafka:29092
+    depends_on:
+      - kafka
+    restart: unless-stopped
+
+  # Frontend
   frontend:
     build: ./frontend
     ports:
@@ -19,3 +123,6 @@ services:
     depends_on:
       - api-gateway
     restart: unless-stopped
+
+volumes:
+  grafana-storage:

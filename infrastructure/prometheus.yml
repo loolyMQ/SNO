@@ -1,0 +1,34 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'kafka'
+    static_configs:
+      - targets: ['localhost:9101']
+
+  - job_name: 'api-gateway'
+    static_configs:
+      - targets: ['api-gateway:3001']
+
+  - job_name: 'auth-service'
+    static_configs:
+      - targets: ['auth-service:3003']
+
+  - job_name: 'graph-service'
+    static_configs:
+      - targets: ['graph-service:3002']
+
+  - job_name: 'search-service'
+    static_configs:
+      - targets: ['search-service:3004']
+
+  - job_name: 'jobs-service'
+    static_configs:
+      - targets: ['jobs-service:3005']

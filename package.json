@@ -3,14 +3,25 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"npm run dev:api\" \"npm run dev:frontend\"",
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:auth\" \"npm run dev:graph\" \"npm run dev:search\" \"npm run dev:jobs\" \"npm run dev:frontend\"",
     "dev:api": "cd backend/api-gateway && npm run dev",
+    "dev:auth": "cd backend/auth-service && npm run dev",
+    "dev:graph": "cd backend/graph-service && npm run dev",
+    "dev:search": "cd backend/search-service && npm run dev",
+    "dev:jobs": "cd backend/jobs-service && npm run dev",
     "dev:frontend": "cd frontend && npm run dev",
-    "build": "npm run build:api && npm run build:frontend",
+    "build": "npm run build:shared && npm run build:services && npm run build:frontend",
+    "build:shared": "cd platform/shared && npm run build",
+    "build:services": "npm run build:api && npm run build:auth && npm run build:graph && npm run build:search && npm run build:jobs",
     "build:api": "cd backend/api-gateway && npm ci",
+    "build:auth": "cd backend/auth-service && npm ci && npm run build",
+    "build:graph": "cd backend/graph-service && npm ci && npm run build",
+    "build:search": "cd backend/search-service && npm ci && npm run build",
+    "build:jobs": "cd backend/jobs-service && npm ci && npm run build",
     "build:frontend": "cd frontend && npm ci && npm run build",
     "start": "docker-compose up",
-    "stop": "docker-compose down"
+    "stop": "docker-compose down",
+    "install:all": "npm install && cd platform/shared && npm install && cd ../../backend/api-gateway && npm install && cd ../auth-service && npm install && cd ../graph-service && npm install && cd ../search-service && npm install && cd ../jobs-service && npm install && cd ../../frontend && npm install"
   },
   "devDependencies": {
     "concurrently": "^8.2.0"
