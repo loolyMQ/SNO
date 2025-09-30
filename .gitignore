@@ -1,14 +1,14 @@
 # Dependencies
 node_modules/
 .pnpm-store/
-.pnpm-debug.log*
 
 # Build outputs
 dist/
 build/
-*.tsbuildinfo
+.next/
+out/
 
-# Environment files
+# Environment variables
 .env
 .env.local
 .env.development.local
@@ -16,15 +16,15 @@ build/
 .env.production.local
 
 # Logs
-logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 lerna-debug.log*
 
 # Runtime data
-pids/
+pids
 *.pid
 *.seed
 *.pid.lock
@@ -48,6 +48,9 @@ jspm_packages/
 # Optional eslint cache
 .eslintcache
 
+# Optional stylelint cache
+.stylelintcache
+
 # Microbundle cache
 .rpt2_cache/
 .rts2_cache_cjs/
@@ -63,9 +66,12 @@ jspm_packages/
 # Yarn Integrity file
 .yarn-integrity
 
-# dotenv environment variables file
+# dotenv environment variable files
 .env
-.env.test
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
@@ -73,6 +79,7 @@ jspm_packages/
 
 # Next.js build output
 .next
+out
 
 # Nuxt.js build / generate output
 .nuxt
@@ -85,6 +92,7 @@ public
 # Storybook build outputs
 .out
 .storybook-out
+storybook-static
 
 # Temporary folders
 tmp/
@@ -93,7 +101,6 @@ temp/
 # Editor directories and files
 .vscode/
 .idea/
-.cursorrules/
 *.swp
 *.swo
 *~
@@ -115,33 +122,12 @@ Thumbs.db
 *.sqlite
 *.sqlite3
 
-# Redis dump
-dump.rdb
-
-# Test coverage
-coverage/
-.nyc_output/
-
-# Jest
-jest.config.js
-
 # Prisma
 prisma/migrations/
 
-# Generated files
-*.generated.*
-*.d.ts.map
-*.js.map
+# Testing
+coverage/
+.nyc_output/
 
-# Lock files (keep pnpm-lock.yaml)
-package-lock.json
-yarn.lock
-
-# IDE
-.vscode/
-.idea/
-*.sublime-project
-*.sublime-workspace
-
-# Cursor IDE
-.cursorrules/
+# Changeset
+.changeset/pre.json

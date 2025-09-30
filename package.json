@@ -1,43 +1,89 @@
 {
-  "name": "sno-platform",
+  "name": "science-map",
   "version": "1.0.0",
-  "description": "Science Network Observatory Platform",
   "private": true,
-  "workspaces": [
-    "backend/*",
-    "frontend",
-    "platform/*"
-  ],
-  "scripts": {
-    "build": "pnpm -r build",
-    "test": "pnpm -r test",
-    "lint": "pnpm -r lint",
-    "lint:fix": "pnpm -r lint:fix",
-    "format": "pnpm -r format",
-    "format:check": "pnpm -r format:check",
-    "type-check": "pnpm -r type-check",
-    "dev": "pnpm -r dev",
-    "start": "pnpm -r start",
-    "clean": "pnpm -r clean",
-    "docker:build": "docker-compose build",
-    "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down",
-    "docker:logs": "docker-compose logs -f",
-    "health:check": "./scripts/health-check-all.sh",
-    "monitoring:start": "./start-monitoring.sh",
-    "monitoring:stop": "./stop-monitoring.sh"
-  },
-  "devDependencies": {
-    "@types/node": "^20.0.0",
-    "typescript": "^5.0.0",
-    "eslint": "^8.0.0",
-    "prettier": "^3.0.0",
-    "husky": "^8.0.0",
-    "lint-staged": "^13.0.0"
-  },
+  "description": "Science Map - Interactive Knowledge Graph Platform",
+  "author": "Science Map Team",
+  "license": "MIT",
   "engines": {
     "node": ">=18.0.0",
     "pnpm": ">=8.0.0"
   },
-  "packageManager": "pnpm@9.0.0"
+  "packageManager": "pnpm@8.15.0",
+  "scripts": {
+    "dev": "concurrently \"pnpm run dev:api\" \"pnpm run dev:auth\" \"pnpm run dev:graph\" \"pnpm run dev:search\" \"pnpm run dev:jobs\" \"pnpm run dev:frontend\"",
+    "dev:api": "pnpm --filter @science-map/api-gateway dev",
+    "dev:auth": "pnpm --filter @science-map/auth-service dev",
+    "dev:graph": "pnpm --filter @science-map/graph-service dev",
+    "dev:search": "pnpm --filter @science-map/search-service dev",
+    "dev:jobs": "pnpm --filter @science-map/jobs-service dev",
+    "dev:frontend": "pnpm --filter frontend dev",
+    "build": "pnpm run build:shared && pnpm run build:services && pnpm run build:frontend",
+    "build:shared": "pnpm --filter @science-map/shared build",
+    "build:services": "pnpm run build:api && pnpm run build:auth && pnpm run build:graph && pnpm run build:search && pnpm run build:jobs",
+    "build:api": "pnpm --filter @science-map/api-gateway build",
+    "build:auth": "pnpm --filter @science-map/auth-service build",
+    "build:graph": "pnpm --filter @science-map/graph-service build",
+    "build:search": "pnpm --filter @science-map/search-service build",
+    "build:jobs": "pnpm --filter @science-map/jobs-service build",
+    "build:frontend": "pnpm --filter frontend build",
+    "start": "docker-compose up",
+    "stop": "docker-compose down",
+    "install:all": "pnpm install",
+    "clean": "pnpm -r clean && rm -rf node_modules",
+    "clean:build": "pnpm -r exec rm -rf dist build .next",
+    "lint": "pnpm -r lint",
+    "lint:fix": "pnpm -r lint:fix",
+    "test": "pnpm -r test",
+    "test:watch": "pnpm -r test:watch",
+    "test:coverage": "pnpm -r test:coverage",
+    "type-check": "pnpm -r type-check",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "lint:staged": "lint-staged",
+    "prepare": "husky install",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "changeset publish",
+    "db:generate": "pnpm --filter @science-map/auth-service db:generate",
+    "db:push": "pnpm --filter @science-map/auth-service db:push",
+    "db:migrate": "pnpm --filter @science-map/auth-service db:migrate",
+    "db:seed": "pnpm --filter @science-map/auth-service db:seed",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "monitoring:up": "docker-compose -f infrastructure/monitoring-compose.yml up -d",
+    "monitoring:down": "docker-compose -f infrastructure/monitoring-compose.yml down",
+    "monitoring:logs": "docker-compose -f infrastructure/monitoring-compose.yml logs -f"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.26.2",
+    "@types/node": "^20.8.10",
+    "@typescript-eslint/eslint-plugin": "8.45.0",
+    "@typescript-eslint/parser": "8.45.0",
+    "concurrently": "^8.2.2",
+    "eslint": "9.36.0",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-prettier": "5.5.4",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.6.2",
+    "typescript": "^5.2.2"
+  },
+  "lint-staged": {
+    "**/*.{ts,tsx,js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "**/*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
+  },
+  "workspaces": [
+    "frontend",
+    "backend/*",
+    "platform/*",
+    "infrastructure/*"
+  ]
 }
