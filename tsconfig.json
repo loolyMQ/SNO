@@ -1,0 +1,23 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true
+  },
+  "references": [
+    { "path": "./backend/api-gateway" },
+    { "path": "./backend/auth-service" },
+    { "path": "./backend/graph-service" },
+    { "path": "./backend/search-service" },
+    { "path": "./backend/jobs-service" },
+    { "path": "./platform/shared" }
+  ],
+  "include": [],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ]
+}
