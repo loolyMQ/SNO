@@ -1,0 +1,73 @@
+import { JWTSecurityValidator } from './jwt-validator';
+import pino from 'pino';
+const logger = pino({
+    level: process.env['LOG_LEVEL'] || 'info',
+});
+export class SecureJWTConfig {
+    config;
+    validationResult;
+    constructor() {
+        this.config = this.loadConfigFromEnvironment();
+        this.validationResult = JWTSecurityValidator.validateJWTConfig(this.config);
+        this.validateConfiguration();
+    }
+    loadConfigFromEnvironment() {
+        const secret = process.env['JWT_SECRET'];
+        if (!secret) {
+            throw new Error('JWT_SECRET environment variable is required');
+        }
+        return {
+            secret,
+            algorithm: process.env['JWT_ALGORITHM'] || 'HS256',
+            expiresIn: process.env['JWT_EXPIRES_IN'] || '1h',
+            refreshExpiresIn: process.env['REFRESH_TOKEN_EXPIRES_IN'] || '7d',
+            issuer: process.env['JWT_ISSUER'] || 'science-map',
+            audience: process.env['JWT_AUDIENCE'] || 'science-map-users',
+        };
+    }
+    validateConfiguration() {
+        if (!this.validationResult.isValid) {
+            const errorMessage = [
+                'JWT configuration is invalid:',
+                ...this.validationResult.errors.map(error => `  - ${error}`),
+            ].join('\n');
+            throw new Error(errorMessage);
+        }
+        if (this.validationResult.warnings.length > 0) {
+            logger.warn('JWT configuration warnings:');
+            this.validationResult.warnings.forEach(warning => {
+                logger.warn(`  - ${warning}`);
+            });
+        }
+    }
+    getConfig() {
+        return { ...this.config };
+    }
+    isSecure() {
+        return JWTSecurityValidator.isSecretSecure(this.config.secret);
+    }
+    getSecurityRecommendations() {
+        return JWTSecurityValidator.getSecurityRecommendations();
+    }
+    generateSecureSecret(length = 128) {
+        return JWTSecurityValidator.generateSecureSecret(length);
+    }
+    static validateEnvironment() {
+        try {
+            const config = new SecureJWTConfig();
+            return {
+                isValid: true,
+                errors: [],
+                warnings: config.validationResult.warnings,
+            };
+        }
+        catch (error) {
+            return {
+                isValid: false,
+                errors: [error instanceof Error ? error.message : String(error)],
+                warnings: [],
+            };
+        }
+    }
+}
+//# sourceMappingURL=jwt-config.js.map

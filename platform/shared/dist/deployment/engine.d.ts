@@ -1,0 +1,43 @@
+import { DeploymentConfig, Deployment, DeploymentProgress } from './types';
+export declare class DeploymentEngine {
+    private static instance;
+    private configs;
+    private deployments;
+    private logger;
+    constructor();
+    static getInstance(): DeploymentEngine;
+    createConfig(config: Omit<DeploymentConfig, 'id' | 'createdAt' | 'updatedAt'>): DeploymentConfig;
+    updateConfig(id: string, updates: Partial<DeploymentConfig>): DeploymentConfig | null;
+    getConfig(id: string): DeploymentConfig | null;
+    getAllConfigs(): DeploymentConfig[];
+    deploy(configId: string): Promise<Deployment>;
+    rollback(deploymentId: string): Promise<Deployment>;
+    getDeployment(id: string): Deployment | null;
+    getAllDeployments(): Deployment[];
+    getDeploymentProgress(id: string): DeploymentProgress | null;
+    private executeCanaryDeployment;
+    private executeBlueGreenDeployment;
+    private executeRollingDeployment;
+    private executeRecreateDeployment;
+    private updateTrafficRouting;
+    private waitForStability;
+    private collectMetrics;
+    private shouldRollback;
+    private deployGreenVersion;
+    private waitForHealthCheck;
+    private switchTraffic;
+    private cleanupBlueVersion;
+    private deployBatch;
+    private waitForBatchHealth;
+    private stopOldVersion;
+    private deployNewVersion;
+    private createRollbackPlan;
+    private executeRollbackPlan;
+    private executeRollbackStep;
+    private getTotalSteps;
+    private getCompletedSteps;
+    private getCurrentStep;
+    private estimateTimeRemaining;
+    private addEvent;
+}
+//# sourceMappingURL=engine.d.ts.map

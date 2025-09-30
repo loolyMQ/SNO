@@ -1,0 +1,1 @@
+{"version":3,"file":"database.d.ts","sourceRoot":"","sources":["../../../src/health/checks/database.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,mBAAmB,EAAE,MAAM,UAAU,CAAC;AAC/C,OAAO,EAAE,YAAY,EAAE,MAAM,gBAAgB,CAAC;AAE9C,wBAAsB,yBAAyB,CAC7C,MAAM,EAAE,YAAY,GACnB,OAAO,CAAC,mBAAmB,CAAC,CAuC9B"}
