@@ -6,7 +6,7 @@ export class StandardizedErrorHandler {
                 success: false,
                 error: {
                     code: error.code,
-                    message: error.message,
+                    message: error instanceof Error ? error.message : String(error),
                     severity: error.severity,
                     timestamp: new Date().toISOString(),
                     correlationId: correlationId || '',
@@ -20,7 +20,7 @@ export class StandardizedErrorHandler {
             success: false,
             error: {
                 code: ErrorCode.SYSTEM_NETWORK_ERROR,
-                message: error.message || 'Internal server error',
+                message: (error instanceof Error ? error.message : String(error)) || 'Internal server error',
                 severity: ErrorSeverity.HIGH,
                 timestamp: new Date().toISOString(),
                 correlationId: correlationId || '',

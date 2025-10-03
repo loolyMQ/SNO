@@ -1,13 +1,63 @@
+# Dependencies
 node_modules/
-dist/
-build/
-coverage/
-*.log
-*.lock
 pnpm-lock.yaml
 package-lock.json
 yarn.lock
+
+# Build outputs
+dist/
+build/
+coverage/
+.next/
+out/
+
+# Generated files
+*.d.ts
+*.js.map
+*.d.ts.map
+
+# Logs
+*.log
+logs/
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
 .DS_Store
+Thumbs.db
+
+# Git
 .git/
-.husky/
-.cursorrules/
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Kubernetes
+k8s/
+helm/
+
+# Terraform
+terraform/
+*.tfstate
+*.tfstate.backup
+
+# Monitoring
+monitoring/
+grafana/
+prometheus/
+
+# Test results
+test-results/
+playwright-report/

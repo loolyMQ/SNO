@@ -1,0 +1,115 @@
+syntax = "proto3";
+
+package science_map.search;
+
+option go_package = "github.com/science-map/platform/shared/src/proto/search";
+
+import "google/protobuf/timestamp.proto";
+
+service SearchService {
+  rpc Search(SearchRequest) returns (SearchResponse);
+  rpc GetSuggestions(GetSuggestionsRequest) returns (GetSuggestionsResponse);
+  rpc IndexDocument(IndexDocumentRequest) returns (IndexDocumentResponse);
+  rpc RemoveDocument(RemoveDocumentRequest) returns (RemoveDocumentResponse);
+  rpc UpdateDocument(UpdateDocumentRequest) returns (UpdateDocumentResponse);
+  rpc GetDocument(GetDocumentRequest) returns (GetDocumentResponse);
+}
+
+message SearchRequest {
+  string query = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+  repeated string filters = 4;
+  string sort_by = 5;
+  string sort_order = 6;
+  string user_id = 7;
+}
+
+message SearchResponse {
+  bool success = 1;
+  repeated SearchResult results = 2;
+  int32 total = 3;
+  int32 page = 4;
+  int32 per_page = 5;
+  string error = 6;
+}
+
+message GetSuggestionsRequest {
+  string query = 1;
+  int32 limit = 2;
+  string user_id = 3;
+}
+
+message GetSuggestionsResponse {
+  bool success = 1;
+  repeated string suggestions = 2;
+  string error = 3;
+}
+
+message IndexDocumentRequest {
+  string document_id = 1;
+  Document document = 2;
+  string user_id = 3;
+}
+
+message IndexDocumentResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message RemoveDocumentRequest {
+  string document_id = 1;
+  string user_id = 2;
+}
+
+message RemoveDocumentResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message UpdateDocumentRequest {
+  string document_id = 1;
+  Document document = 2;
+  string user_id = 3;
+}
+
+message UpdateDocumentResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message GetDocumentRequest {
+  string document_id = 1;
+  string user_id = 2;
+}
+
+message GetDocumentResponse {
+  bool success = 1;
+  Document document = 2;
+  string error = 3;
+}
+
+message SearchResult {
+  string id = 1;
+  string title = 2;
+  string content = 3;
+  string type = 4;
+  double score = 5;
+  map<string, string> metadata = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+}
+
+message Document {
+  string id = 1;
+  string title = 2;
+  string content = 3;
+  string type = 4;
+  map<string, string> metadata = 5;
+  repeated string tags = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+}
+
+
+

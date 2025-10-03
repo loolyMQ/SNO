@@ -25,10 +25,15 @@
     "docker:logs": "docker-compose logs -f",
     "health:check": "./scripts/health-check-all.sh",
     "monitoring:start": "./start-monitoring.sh",
-    "monitoring:stop": "./stop-monitoring.sh"
+    "monitoring:stop": "./stop-monitoring.sh",
+    "prepare": "husky install",
+    "quality:check": "pnpm lint && pnpm format:check && pnpm type-check",
+    "quality:fix": "pnpm lint:fix && pnpm format"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
     "typescript": "^5.0.0",
     "eslint": "^8.0.0",
     "prettier": "^3.0.0",

@@ -5,8 +5,7 @@ export function createMonitoringMiddleware(performanceMonitor) {
         res.send = function (body) {
             const duration = (Date.now() - startTime) / 1000;
             const statusCode = res.statusCode;
-            // const _method = req.method;
-            // const _route = req.route?.path || req.path;
+            // Method and route tracking would be implemented here
             performanceMonitor.recordRequest(duration, 'http_request');
             if (statusCode >= 400) {
                 const errorType = statusCode >= 500 ? 'server_error' : 'client_error';

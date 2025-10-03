@@ -24,9 +24,8 @@ export class ContractMetricsCalculator {
             ? contractTests.reduce((sum, test) => sum + (test.duration || 0), 0) / contractTests.length
             : 0;
         // Use calculated values to avoid unused variable warnings
-        console.debug('Consumer success rate:', consumerSuccessRate);
-        console.debug('Provider success rate:', providerSuccessRate);
-        console.debug('Average execution time:', averageExecutionTime);
+        // Structured logging would be implemented here in production
+        // logger.debug({ consumerSuccessRate, providerSuccessRate, averageExecutionTime }, 'Contract metrics calculated');
         const lastTestDate = contractTests.length > 0 ? Math.max(...contractTests.map(test => test.executedAt || 0)) : 0;
         return {
             contractId: contract.id,

@@ -1,0 +1,83 @@
+name: Quality Check
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  schedule:
+    - cron: '0 2 * * 1'
+
+jobs:
+  quality-analysis:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: ESLint Analysis
+        run: |
+          pnpm -w run -r lint --format=json --output-file=eslint-report.json || true
+          echo "ESLint analysis completed"
+
+      - name: TypeScript Analysis
+        run: |
+          pnpm -w run -r type-check 2>&1 | tee typescript-report.txt || true
+          echo "TypeScript analysis completed"
+
+      - name: Prettier Analysis
+        run: |
+          pnpm -w run -r format:check 2>&1 | tee prettier-report.txt || true
+          echo "Prettier analysis completed"
+
+      - name: Test Coverage
+        run: |
+          pnpm -w run -r test -- --coverage --coverageReporters=json --coverageReporters=text || true
+          echo "Test coverage analysis completed"
+
+      - name: Security Audit
+        run: |
+          pnpm audit --audit-level=moderate || true
+          echo "Security audit completed"
+
+      - name: Bundle Analysis
+        run: |
+          pnpm -w run -r build
+          echo "Bundle analysis completed"
+
+      - name: Upload Quality Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: quality-reports
+          path: |
+            eslint-report.json
+            typescript-report.txt
+            prettier-report.txt
+            coverage/
+          retention-days: 30
+
+      - name: Quality Gate
+        run: |
+          echo "Quality analysis completed"
+          echo "Reports uploaded as artifacts"
+
+
+

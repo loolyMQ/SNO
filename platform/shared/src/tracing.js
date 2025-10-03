@@ -23,7 +23,7 @@ export class TracingManager {
             [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: this.config.environment,
         }));
         const traceExporters = this.createTraceExporters();
-        // const metricExporters = this.createMetricExporters(); // Not used
+        // Metric exporters would be created here if needed
         this.sdk = new NodeSDK({
             resource,
             traceExporter: traceExporters.length > 1
@@ -75,11 +75,11 @@ export class TracingManager {
     //   const exporters: unknown[] = [];
     //
     //   if (this.config.otlpEndpoint) {
-    //     // const metricExporter = new OTLPMetricExporter({
+    //     // Metric exporter configuration would go here
     //     //   url: this.config.otlpEndpoint.replace('/traces', '/metrics'),
     //     // });
     //     // // Add forceFlush method to match interface
-    //     // (metricExporter as any).forceFlush = () => Promise.resolve();
+    //     // (metricExporter as unknown).forceFlush = () => Promise.resolve();
     //
     //     // exporters.push(new PeriodicExportingMetricReader({
     //     //   exporter: metricExporter,
@@ -313,7 +313,7 @@ export const TracingUtils = {
         headers['x-service'] = traceContext.service;
     },
     createCorrelationId() {
-        return `corr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        return `corr_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
     },
     formatTraceForLogs(traceContext) {
         if (!traceContext) {

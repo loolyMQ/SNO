@@ -34,10 +34,10 @@ export const utils = {
         return date.toISOString().split('T')[0] || '';
     },
     generateId: () => {
-        return Math.random().toString(36).substr(2, 9);
+        return Math.random().toString(36).substring(2, 11);
     },
     generateCorrelationId: () => {
-        return `corr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        return `corr_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
     },
 };
 //# sourceMappingURL=index.js.map

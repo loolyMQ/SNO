@@ -54,11 +54,11 @@ export declare class DIContainer {
 }
 export declare const globalContainer: DIContainer;
 export declare const serviceFactories: {
-    kafkaClient: (serviceName: string) => (_container: DIContainer) => any;
-    redisClient: (serviceName: string, config?: Record<string, unknown>) => (_container: DIContainer) => any;
-    databaseIndexManager: (serviceName: string) => (_container: DIContainer) => any;
-    logger: (config: pino.LoggerOptions) => (_container: DIContainer) => any;
-    expressApp: () => (_container: DIContainer) => any;
+    kafkaClient: (serviceName: string) => (_container: DIContainer) => unknown;
+    redisClient: (serviceName: string, config?: Record<string, unknown>) => (_container: DIContainer) => unknown;
+    databaseIndexManager: (serviceName: string) => (_container: DIContainer) => unknown;
+    logger: (config: pino.LoggerOptions) => (_container: DIContainer) => unknown;
+    expressApp: () => (_container: DIContainer) => unknown;
 };
 export declare function inject(key: DependencyKey): (_target: object, _propertyKey: string, descriptor: PropertyDescriptor) => void;
 export declare function injectable(key?: DependencyKey, config?: ServiceConfig): <T extends new (...args: unknown[]) => object>(constructor: T) => T;

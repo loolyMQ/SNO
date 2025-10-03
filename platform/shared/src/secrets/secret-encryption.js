@@ -18,7 +18,7 @@ export class SecretEncryption {
             // cipher.setAAD(Buffer.from('science-map-secrets', 'utf8')); // Not available on Cipher
             let encrypted = cipher.update(plaintext, 'utf8', 'hex');
             encrypted += cipher.final('hex');
-            // const tag = cipher.getAuthTag(); // Not available on Cipher
+            // Auth tag would be retrieved here if needed
             const result = {
                 encrypted,
                 iv: iv.toString('hex'),

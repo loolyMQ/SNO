@@ -28,14 +28,23 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Type Check
+        run: pnpm -w run -r type-check
+
       - name: Lint
-        run: pnpm -w exec eslint . --ext .ts,.tsx,.js
+        run: pnpm -w run -r lint
+
+      - name: Format Check
+        run: pnpm -w run -r format:check
 
       - name: Build
         run: pnpm -w run -r build
 
       - name: Test
         run: pnpm -w run -r test -- --ci --reporters=default --reporters=jest-junit || true
+
+      - name: Quality Check
+        run: pnpm -w run quality:check
 
       - name: Snyk Open Source (optional)
         if: ${{ secrets.SNYK_TOKEN != '' }}

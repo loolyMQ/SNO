@@ -144,7 +144,7 @@ export class RetryManager {
         if (error instanceof AppError) {
             return error.retryable;
         }
-        const errorMessage = error.message.toLowerCase();
+        const errorMessage = (error instanceof Error ? error.message : String(error)).toLowerCase();
         return config.retryableErrors.some(pattern => errorMessage.includes(pattern.toLowerCase()));
     }
     static calculateDelay(attempt, config) {
@@ -159,11 +159,11 @@ export class RetryManager {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
     static wrapRetryError(error, service, attempts, totalTime) {
-        return new AppError(ErrorCode.SYSTEM_NETWORK_ERROR, `Operation failed after ${attempts} attempts in ${totalTime}ms: ${error.message}`, ErrorSeverity.HIGH, service, {
+        return new AppError(ErrorCode.SYSTEM_NETWORK_ERROR, `Operation failed after ${attempts} attempts in ${totalTime}ms: ${error instanceof Error ? error.message : String(error)}`, ErrorSeverity.HIGH, service, {
             retryable: false,
             httpStatus: 503,
             context: {
-                originalError: error.message,
+                originalError: error instanceof Error ? error.message : String(error),
                 attempts,
                 totalTime,
                 service,

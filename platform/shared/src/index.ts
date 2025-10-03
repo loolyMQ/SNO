@@ -1,3 +1,16 @@
+import pino from 'pino';
+
+const logger = pino({
+  level: process.env.LOG_LEVEL || 'info',
+  transport: {
+    target: 'pino-pretty',
+    options: {
+      colorize: true,
+      translateTime: 'SYS:standard',
+    },
+  },
+});
+
 export interface ServiceConfig {
   port: number;
   kafka: {
@@ -7,37 +20,60 @@ export interface ServiceConfig {
   };
 }
 
+export interface KafkaMessage {
+  key?: string;
+  value: string;
+  headers?: Record<string, string>;
+  timestamp?: number;
+}
+
 export interface KafkaClient {
   connect(): Promise<void>;
   disconnect(): Promise<void>;
-  publish(topic: string, message: any): Promise<void>;
-  subscribe(topic: string, handler: (message: any) => void): Promise<void>;
+  publish(topic: string, message: KafkaMessage): Promise<void>;
+  subscribe(topic: string, handler: (message: KafkaMessage) => void): Promise<void>;
 }
 
 export class KafkaClientImpl implements KafkaClient {
-  private client: any;
-  private producer: any;
-  private consumer: any;
-
   constructor(private config: ServiceConfig) {}
 
   async connect(): Promise<void> {
-    console.log('Connecting to Kafka...');
+    logger.info({
+      service: 'kafka-client',
+      action: 'connect',
+      brokers: this.config.kafka.brokers
+    }, 'Connecting to Kafka...');
   }
 
   async disconnect(): Promise<void> {
-    console.log('Disconnecting from Kafka...');
+    logger.info({
+      service: 'kafka-client',
+      action: 'disconnect'
+    }, 'Disconnecting from Kafka...');
   }
 
-  async publish(topic: string, message: any): Promise<void> {
-    console.log(`Publishing to topic ${topic}:`, message);
+  async publish(topic: string, message: KafkaMessage): Promise<void> {
+    logger.info({
+      service: 'kafka-client',
+      action: 'publish',
+      topic,
+      messageKey: message.key
+    }, `Publishing to topic ${topic}`);
   }
 
-  async subscribe(topic: string, handler: (message: any) => void): Promise<void> {
-    console.log(`Subscribing to topic ${topic}`);
+  async subscribe(topic: string, _handler: (message: KafkaMessage) => void): Promise<void> {
+    logger.info({
+      service: 'kafka-client',
+      action: 'subscribe',
+      topic
+    }, `Subscribing to topic ${topic}`);
   }
 }
 
 export function createKafkaClient(config: ServiceConfig): KafkaClient {
   return new KafkaClientImpl(config);
 }
+
+export { CircuitBreaker, CircuitBreakerManager, CircuitBreakerConfig, CircuitState, CircuitBreakerMetrics } from './circuit-breaker';
+export { GrpcClient, GrpcClientManager, GrpcServer, GrpcServerManager, createGrpcClient, createGrpcServer, GRPC_CLIENT_CONFIGS, GRPC_SERVER_CONFIGS } from './grpc/client';
+export { GrpcClientConfig, GrpcServerConfig, GrpcServiceImplementation } from './grpc/server';

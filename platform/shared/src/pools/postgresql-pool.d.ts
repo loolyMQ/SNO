@@ -18,7 +18,7 @@ export declare class PostgreSQLConnectionPool implements IConnectionPool<PoolCli
     private updateMetrics;
     private startHealthCheck;
     shutdown(): Promise<void>;
-    query(text: string, params?: any[]): Promise<any>;
+    query(text: string, params?: unknown[]): Promise<unknown>;
     transaction<T>(callback: (client: PoolClient) => Promise<T>): Promise<T>;
     getPool(): PgPool;
 }

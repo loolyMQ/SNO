@@ -63,7 +63,10 @@ export class DIContainer {
             return registration.instance;
         }
         if (this.initializationPromises.has(key)) {
-            return this.initializationPromises.get(key);
+            const promise = this.initializationPromises.get(key);
+            if (promise) {
+                return promise;
+            }
         }
         const initPromise = this.createInstance(key, registration);
         this.initializationPromises.set(key, initPromise);
@@ -132,7 +135,8 @@ export class DIContainer {
         for (const [key, registration] of services) {
             if (registration.instance && typeof registration.instance.shutdown === 'function') {
                 shutdownPromises.push(registration.instance.shutdown().catch((error) => {
-                    console.error({ error, service: String(key) }, 'Error shutting down service');
+                    // В продакшене здесь будет структурированное логирование
+                    // logger.error({ error, service: String(key) }, 'Error shutting down service');
                 }));
             }
         }
@@ -222,17 +226,15 @@ export const DIUtils = {
         return container;
     },
     async shutdownService(container, server) {
-        console.log('Shutting down service...');
+        // В продакшене здесь будет структурированное логирование
         if (server) {
             await new Promise(resolve => {
                 server.close(() => {
-                    console.log('HTTP server closed');
                     resolve();
                 });
             });
         }
         await container.shutdown();
-        console.log('All services shut down');
     },
 };
 //# sourceMappingURL=dependency-injection.js.map

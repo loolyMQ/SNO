@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: science-map-platform
+  labels:
+    name: science-map-platform
+    environment: production

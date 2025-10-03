@@ -124,7 +124,7 @@ export class ErrorRecoveryManager {
         }
     }
     async executeWithTimeout(operation, timeoutMs, operationName, correlationId, fallbackValue) {
-        const timeoutPromise = new Promise((_, reject) => {
+        const timeoutPromise = new Promise((resolve, reject) => {
             setTimeout(() => {
                 reject(new Error(`Operation ${operationName} timed out after ${timeoutMs}ms`));
             }, timeoutMs);

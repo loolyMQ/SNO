@@ -12,7 +12,7 @@ export class EnvironmentValidator {
     }
     validateEnvironment(requiredVars, optionalVars = []) {
         const errors = [];
-        const _warnings = [];
+        const warnings = [];
         const missing = [];
         for (const varName of requiredVars) {
             if (!process.env[varName]) {

@@ -20,7 +20,7 @@ export declare class QueryOptimizer {
         cacheResults?: boolean;
     }): Promise<{
         result: T;
-        analysis: any;
+        analysis: Record<string, unknown>;
     }>;
     getCacheStats(): Record<string, unknown>;
     getMetrics(): Record<string, unknown>;

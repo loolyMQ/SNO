@@ -1,27 +1,49 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import { createKafkaClient, ServiceConfig } from '@science-map/shared';
+import pino from 'pino';
+import client from 'prom-client';
+import { createKafkaClient } from '@science-map/shared';
+
+const logger = pino({
+  level: process.env.LOG_LEVEL || 'info',
+  transport: {
+    target: 'pino-pretty',
+    options: {
+      colorize: true,
+      translateTime: 'SYS:standard',
+    },
+  },
+});
 
 const app = express();
 const PORT = process.env.PORT || 3002;
 
-const config: ServiceConfig = {
-  port: Number(PORT),
-  kafka: {
-    brokers: [process.env.KAFKA_BROKER || 'localhost:9092'],
-    clientId: 'graph-service',
-    groupId: 'graph-service-group',
-  },
-};
+// Prometheus metrics
+const register = new client.Registry();
+client.collectDefaultMetrics({ register });
+const httpRequestCounter = new client.Counter({
+  name: 'graph_service_http_requests_total',
+  help: 'Total number of HTTP requests',
+  labelNames: ['method', 'route', 'status']
+});
+register.registerMetric(httpRequestCounter);
+
+// Kafka configuration is handled by createKafkaClient
 
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
-const kafkaClient = createKafkaClient(config);
+// Metrics endpoint
+app.get('/metrics', async (_req, res) => {
+  res.setHeader('Content-Type', register.contentType);
+  res.end(await register.metrics());
+});
 
-app.get('/health', (req, res) => {
+const kafkaClient = createKafkaClient('graph-service');
+
+app.get('/health', (_req, res) => {
   res.json({
     success: true,
     status: 'healthy',
@@ -30,7 +52,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-app.get('/graph/data', (req, res) => {
+app.get('/graph/data', (_req, res) => {
   const mockData = {
     nodes: [
       { id: 1, name: 'Computer Science', x: 100, y: 100 },
@@ -49,7 +71,7 @@ app.get('/graph/data', (req, res) => {
   });
 });
 
-app.post('/graph/update', (req, res) => {
+app.post('/graph/update', (_req, res) => {
   res.json({
     success: true,
     message: 'Graph updated',
@@ -59,13 +81,25 @@ app.post('/graph/update', (req, res) => {
 async function startServer() {
   try {
     await kafkaClient.connect();
-    console.log('✅ Graph Service Kafka connected');
+    logger.info({
+      service: 'graph-service',
+      action: 'kafka-connect'
+    }, 'Graph Service Kafka connected');
 
-    app.listen(PORT, () => {
-      console.log(`🚀 Graph Service running on port ${PORT}`);
+    app.listen(Number(PORT), () => {
+      logger.info({
+        service: 'graph-service',
+        port: PORT,
+        action: 'server-start'
+      }, 'Graph Service running');
     });
   } catch (error) {
-    console.error('❌ Graph Service startup error:', error);
+    logger.error({
+      service: 'graph-service',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      action: 'startup-error'
+    }, 'Graph Service startup error');
     process.exit(1);
   }
 }

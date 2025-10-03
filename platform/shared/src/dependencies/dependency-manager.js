@@ -43,7 +43,7 @@ export class DependencyManager {
             };
         }
         const allDependencies = { ...config.dependencies, ...config.devDependencies };
-        // const commonDeps = CommonDependencies.getDependencies();
+        // Common dependencies would be retrieved here if needed
         const duplicates = [];
         const outdated = [];
         const missing = [];

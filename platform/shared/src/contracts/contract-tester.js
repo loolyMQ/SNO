@@ -2,7 +2,7 @@ import { TestResult } from './types';
 export class ContractTester {
     async runConsumerTest(contract, testData) {
         const test = {
-            id: `test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            id: `test_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
             contractId: contract.id,
             name: `Consumer test for ${contract.name}`,
             testType: 'consumer',
@@ -40,7 +40,7 @@ export class ContractTester {
     }
     async runProviderTest(contract, testData) {
         const test = {
-            id: `test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            id: `test_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
             contractId: contract.id,
             name: `Provider test for ${contract.name}`,
             testType: 'provider',

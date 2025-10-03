@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model SearchIndex {
+  id          String   @id @default(cuid())
+  query       String
+  results     String   // JSON string of results
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([query]) // Index for search queries
+  @@index([createdAt]) // Index for time-based queries
+  @@map("search_index")
+}
+
+model ResearchPaper {
+  id          String   @id @default(cuid())
+  title       String
+  authors     String   // JSON string of authors
+  abstract    String
+  keywords    String   // JSON string of keywords
+  doi         String?  @unique
+  publishedAt DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([title]) // Index for title searches
+  @@index([authors]) // Index for author searches
+  @@index([keywords]) // Index for keyword searches
+  @@index([publishedAt]) // Index for date-based queries
+  @@index([doi]) // Index for DOI lookups
+  @@map("research_papers")
+}

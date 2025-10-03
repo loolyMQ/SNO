@@ -1,0 +1,146 @@
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: science-map-mtls
+  namespace: science-map-platform
+spec:
+  mtls:
+    mode: STRICT
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: science-map-authz
+  namespace: science-map-platform
+spec:
+  rules:
+  - from:
+    - source:
+        principals: ["cluster.local/ns/science-map-platform/sa/api-gateway"]
+    to:
+    - operation:
+        methods: ["GET", "POST", "PUT", "DELETE"]
+        paths: ["/health", "/auth/*", "/graph/*", "/search/*", "/jobs/*"]
+  - from:
+    - source:
+        principals: ["cluster.local/ns/science-map-platform/sa/frontend"]
+    to:
+    - operation:
+        methods: ["GET"]
+        paths: ["/api/health"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: auth-service-authz
+  namespace: science-map-platform
+spec:
+  selector:
+    matchLabels:
+      app: auth-service
+  rules:
+  - from:
+    - source:
+        principals: ["cluster.local/ns/science-map-platform/sa/api-gateway"]
+    to:
+    - operation:
+        methods: ["POST"]
+        paths: ["/auth/login", "/auth/register"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: graph-service-authz
+  namespace: science-map-platform
+spec:
+  selector:
+    matchLabels:
+      app: graph-service
+  rules:
+  - from:
+    - source:
+        principals: ["cluster.local/ns/science-map-platform/sa/api-gateway"]
+    to:
+    - operation:
+        methods: ["GET", "POST"]
+        paths: ["/graph/*"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: search-service-authz
+  namespace: science-map-platform
+spec:
+  selector:
+    matchLabels:
+      app: search-service
+  rules:
+  - from:
+    - source:
+        principals: ["cluster.local/ns/science-map-platform/sa/api-gateway"]
+    to:
+    - operation:
+        methods: ["GET"]
+        paths: ["/search/*"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: jobs-service-authz
+  namespace: science-map-platform
+spec:
+  selector:
+    matchLabels:
+      app: jobs-service
+  rules:
+  - from:
+    - source:
+        principals: ["cluster.local/ns/science-map-platform/sa/api-gateway"]
+    to:
+    - operation:
+        methods: ["GET", "POST"]
+        paths: ["/jobs/*"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+  name: science-map-jwt
+  namespace: science-map-platform
+spec:
+  selector:
+    matchLabels:
+      app: api-gateway
+  jwtRules:
+  - issuer: "science-map-platform"
+    jwksUri: "https://auth-service.science-map-platform.svc.cluster.local/.well-known/jwks.json"
+    audiences: ["science-map-api"]
+    fromHeaders:
+    - name: "Authorization"
+      prefix: "Bearer "
+    fromParams:
+    - "access_token"
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: science-map-jwt-authz
+  namespace: science-map-platform
+spec:
+  selector:
+    matchLabels:
+      app: api-gateway
+  rules:
+  - from:
+    - source:
+        requestPrincipals: ["science-map-platform/*"]
+    to:
+    - operation:
+        methods: ["GET", "POST", "PUT", "DELETE"]
+        paths: ["/api/*"]
+  - to:
+    - operation:
+        methods: ["GET"]
+        paths: ["/health", "/metrics"]
+
+
+

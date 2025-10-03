@@ -24,7 +24,7 @@ export declare class ApiVersioning {
     static createUrlVersioning(): ApiVersioning;
     static createHeaderVersioning(): ApiVersioning;
     static createQueryVersioning(): ApiVersioning;
-    middleware(): (req: Request, res: Response, next: NextFunction) => void | Response<any, Record<string, any>>;
+    middleware(): (req: Request, res: Response, next: NextFunction) => void | Response<unknown, Record<string, unknown>>;
     private extractVersion;
     private extractFromUrl;
     private extractFromHeader;

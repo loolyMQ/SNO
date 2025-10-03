@@ -13,7 +13,7 @@ export interface IQueryStats {
     timestamp: number;
     indexUsed: boolean;
 }
-export declare class DatabaseIndexManager<T = any> {
+export declare class DatabaseIndexManager<T = unknown> {
     private manager;
     private analyzer;
     private metrics;

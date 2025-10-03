@@ -1,119 +1,113 @@
-import express from 'express';
-import pino from 'pino';
-import { createKafkaClient, validateQuery, searchQuerySchema, MultiLevelCache, EnvironmentValidator, CommonMiddleware } from '@science-map/shared';
-const app = express();
-const PORT = process.env['PORT'] || 3004;
-const logger = pino({
-    level: process.env['LOG_LEVEL'] || 'info'
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+require("./tracing");
+const express_1 = __importDefault(require("express"));
+const cors_1 = __importDefault(require("cors"));
+const helmet_1 = __importDefault(require("helmet"));
+const pino_1 = __importDefault(require("pino"));
+const shared_1 = require("@science-map/shared");
+const prom_client_1 = __importDefault(require("prom-client"));
+const zod_1 = require("zod");
+const logger = (0, pino_1.default)({
+    level: process.env.LOG_LEVEL || 'info',
+    transport: {
+        target: 'pino-pretty',
+        options: {
+            colorize: true,
+            translateTime: 'SYS:standard',
+        },
+    },
 });
-// const config: ServiceConfig = {
-//   port: Number(PORT),
-//   kafka: {
-//     brokers: [process.env['KAFKA_BROKER'] || 'localhost:9092']
-//   },
-// };
-const commonMiddleware = CommonMiddleware.create();
-commonMiddleware.setupAll(app, 'search-service', {
-    rateLimit: {
-        windowMs: 15 * 60 * 1000,
-        max: 200,
-        message: 'Too many search requests from this IP, please try again later.'
-    }
+const app = (0, express_1.default)();
+const PORT = process.env.PORT || 3004;
+// Kafka configuration handled by shared factory
+app.use((0, helmet_1.default)());
+app.use((0, cors_1.default)());
+app.use(express_1.default.json());
+const kafkaClient = (0, shared_1.createKafkaClient)('search-service');
+// Prometheus metrics
+const register = new prom_client_1.default.Registry();
+prom_client_1.default.collectDefaultMetrics({ register });
+const httpRequestCounter = new prom_client_1.default.Counter({
+    name: 'search_service_http_requests_total',
+    help: 'Total number of HTTP requests',
+    labelNames: ['method', 'route', 'status']
 });
-const { CentralizedVersionMiddleware } = require('@science-map/shared');
-CentralizedVersionMiddleware.initialize(logger);
-CentralizedVersionMiddleware.createForService({
-    serviceName: 'search-service',
-    dependencies: {
-        'express': '^4.18.0',
-        'meilisearch': '^0.32.0',
-        'elasticsearch': '^8.0.0'
-    }
+register.registerMetric(httpRequestCounter);
+app.get('/metrics', async (_req, res) => {
+    res.setHeader('Content-Type', register.contentType);
+    res.end(await register.metrics());
 });
-app.use(CentralizedVersionMiddleware.getMiddleware('search-service'));
-CentralizedVersionMiddleware.setupRoutes(app, 'search-service');
-const kafkaClient = createKafkaClient('search-service');
-// const poolManager = new ConnectionPoolManager();
-const cache = new MultiLevelCache({
-    maxSize: 2000,
-    ttl: 600000,
-    level: 'l1',
-    strategy: 'lru',
-    evictionPolicy: 'lru',
-    compression: false,
-    encryption: false,
-    namespace: 'search-service'
-}, process.env['REDIS_URL']);
-app.get('/search', validateQuery(searchQuerySchema), async (req, res) => {
-    const { query, filters, limit, offset, sortBy } = req.query;
-    const cacheKey = `search:${JSON.stringify({ query, filters, limit, offset, sortBy })}`;
-    try {
-        const cachedResults = await cache.get(cacheKey);
-        if (cachedResults) {
-            res.json({
-                success: true,
-                results: cachedResults,
-                query,
-                filters,
-                limit,
-                offset,
-                sortBy,
-                cached: true
-            });
-            return;
-        }
-        const mockResults = [
-            { id: 1, title: 'Computer Science', type: 'field' },
-            { id: 2, title: 'Machine Learning', type: 'topic' },
-            { id: 3, title: 'Data Structures', type: 'concept' },
-        ].filter(item => !query || item.title.toLowerCase().includes(query.toLowerCase()));
-        await cache.set(cacheKey, mockResults);
-        res.json({
-            success: true,
-            results: mockResults,
-            query,
-            filters,
-            limit,
-            offset,
-            sortBy,
-            cached: false
-        });
+app.get('/health', (_req, res) => {
+    res.json({
+        success: true,
+        status: 'healthy',
+        service: 'search-service',
+        timestamp: Date.now(),
+    });
+});
+app.get('/search', (req, res) => {
+    const querySchema = zod_1.z.object({
+        q: zod_1.z.string().min(1, { message: 'Query is required' }),
+        limit: zod_1.z.coerce.number().int().min(0).max(100).optional().default(10),
+        offset: zod_1.z.coerce.number().int().min(0).optional().default(0)
+    });
+    const parseResult = querySchema.safeParse({
+        q: req.query.q,
+        limit: req.query.limit,
+        offset: req.query.offset
+    });
+    if (!parseResult.success) {
+        httpRequestCounter.inc({ method: req.method, route: '/search', status: '400' });
+        return res.status(400).json({ success: false, error: 'Invalid query' });
     }
-    catch (error) {
-        res.status(500).json({
-            success: false,
-            error: 'Search failed'
-        });
-    }
+    const { q, limit, offset } = parseResult.data;
+    const mockResults = [
+        { id: 1, title: 'Computer Science', type: 'field' },
+        { id: 2, title: 'Machine Learning', type: 'topic' },
+        { id: 3, title: 'Data Structures', type: 'concept' },
+    ].filter(item => item.title.toLowerCase().includes(q.toLowerCase()))
+        .slice(offset, offset + limit);
+    httpRequestCounter.inc({ method: req.method, route: '/search', status: '200' });
+    return res.json({
+        success: true,
+        query: q,
+        results: mockResults,
+        total: mockResults.length,
+        limit,
+        offset
+    });
 });
 async function startServer() {
     try {
-        const envValidator = EnvironmentValidator.create();
-        const result = envValidator.validateServiceEnvironment('search-service');
-        if (!result.isValid) {
-            logger.error({ errors: result.errors }, 'Environment validation failed');
-            process.exit(1);
-        }
-        if (result.warnings.length > 0) {
-            logger.warn({ warnings: result.warnings }, 'Environment warnings');
-        }
-        logger.info('Environment validation completed');
         await kafkaClient.connect();
-        logger.info('Search Service Kafka connected');
-        // await poolManager.initialize();
-        logger.info('Search Service connection pools initialized');
-        app.listen(PORT, () => {
-            logger.info(`Search Service running on port ${PORT}`);
+        logger.info({
+            service: 'search-service',
+            action: 'kafka-connect'
+        }, 'Search Service Kafka connected');
+        app.listen(Number(PORT), () => {
+            logger.info({
+                service: 'search-service',
+                port: PORT,
+                action: 'server-start'
+            }, 'Search Service running');
         });
     }
     catch (error) {
-        logger.error({ error }, 'Search Service startup error');
+        logger.error({
+            service: 'search-service',
+            error: error instanceof Error ? error.message : 'Unknown error',
+            stack: error instanceof Error ? error.stack : undefined,
+            action: 'startup-error'
+        }, 'Search Service startup error');
         process.exit(1);
     }
 }
 process.on('SIGTERM', async () => {
     await kafkaClient.disconnect();
-    // await poolManager.shutdown();
     process.exit(0);
 });
 startServer();

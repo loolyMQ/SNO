@@ -6,7 +6,7 @@ export interface IIndexConfig {
     sparse: boolean;
     fields?: string[];
 }
-export declare class IndexManager<T = any> {
+export declare class IndexManager<T = unknown> {
     private indexes;
     private compoundIndexes;
     private indexConfigs;

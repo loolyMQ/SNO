@@ -1,0 +1,83 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'api-gateway'
+    static_configs:
+      - targets: ['api-gateway:3001']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  - job_name: 'auth-service'
+    static_configs:
+      - targets: ['auth-service:3003']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  - job_name: 'graph-service'
+    static_configs:
+      - targets: ['graph-service:3002']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  - job_name: 'search-service'
+    static_configs:
+      - targets: ['search-service:3004']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  - job_name: 'jobs-service'
+    static_configs:
+      - targets: ['jobs-service:3005']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  - job_name: 'backup-service'
+    static_configs:
+      - targets: ['backup-service:3006']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  - job_name: 'cdn-service'
+    static_configs:
+      - targets: ['cdn-service:3007']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  - job_name: 'contract-service'
+    static_configs:
+      - targets: ['contract-service:3008']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  - job_name: 'deployment-service'
+    static_configs:
+      - targets: ['deployment-service:3009']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  - job_name: 'secrets-service'
+    static_configs:
+      - targets: ['secrets-service:3010']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  - job_name: 'versioning-service'
+    static_configs:
+      - targets: ['versioning-service:3011']
+    metrics_path: '/metrics'
+    scrape_interval: 5s

@@ -44,7 +44,7 @@ export class TracedKafkaProducer {
                     span.recordException(error);
                     span.setStatus({
                         code: SpanStatusCode.ERROR,
-                        message: error.message,
+                        message: error instanceof Error ? error.message : String(error),
                     });
                 }
                 throw error;
@@ -73,7 +73,7 @@ export class TracedKafkaProducer {
                         childSpan.recordException(error);
                         childSpan.setStatus({
                             code: SpanStatusCode.ERROR,
-                            message: error.message,
+                            message: error instanceof Error ? error.message : String(error),
                         });
                     }
                     throw error;
@@ -131,7 +131,7 @@ export class TracedKafkaConsumer {
                         span.recordException(error);
                         span.setStatus({
                             code: SpanStatusCode.ERROR,
-                            message: error.message,
+                            message: error instanceof Error ? error.message : String(error),
                         });
                     }
                     throw error;

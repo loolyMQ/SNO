@@ -1,0 +1,160 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: ServiceEntry
+metadata:
+  name: external-services
+  namespace: science-map-platform
+spec:
+  hosts:
+  - redis.science-map.svc.cluster.local
+  - postgres.science-map.svc.cluster.local
+  - kafka.science-map.svc.cluster.local
+  ports:
+  - number: 6379
+    name: redis
+    protocol: TCP
+  - number: 5432
+    name: postgres
+    protocol: TCP
+  - number: 9092
+    name: kafka
+    protocol: TCP
+  location: MESH_INTERNAL
+  resolution: DNS
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: custom-metrics
+  namespace: science-map-platform
+spec:
+  configPatches:
+  - applyTo: HTTP_FILTER
+    match:
+      context: SIDECAR_INBOUND
+      listener:
+        filterChain:
+          filter:
+            name: "envoy.filters.network.http_connection_manager"
+    patch:
+      operation: INSERT_BEFORE
+      value:
+        name: envoy.filters.http.wasm
+        typed_config:
+          "@type": type.googleapis.com/udpa.type.v1.TypedStruct
+          type_url: type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm
+          value:
+            config:
+              name: custom_metrics
+              root_id: custom_metrics_root
+              configuration:
+                "@type": type.googleapis.com/google.protobuf.StringValue
+                value: |
+                  {
+                    "metrics": [
+                      {
+                        "name": "requests_total",
+                        "type": "counter",
+                        "labels": ["method", "path", "status"]
+                      },
+                      {
+                        "name": "request_duration_seconds",
+                        "type": "histogram",
+                        "labels": ["method", "path"]
+                      }
+                    ]
+                  }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: istio-prometheus-config
+  namespace: science-map-platform
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+    scrape_configs:
+    - job_name: 'istio-mesh'
+      kubernetes_sd_configs:
+      - role: endpoints
+        namespaces:
+          names:
+          - science-map-platform
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
+        action: keep
+        regex: true
+      - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_path]
+        action: replace
+        target_label: __metrics_path__
+        regex: (.+)
+      - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
+        action: replace
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+        target_label: __address__
+      - action: labelmap
+        regex: __meta_kubernetes_service_label_(.+)
+      - source_labels: [__meta_kubernetes_namespace]
+        action: replace
+        target_label: kubernetes_namespace
+      - source_labels: [__meta_kubernetes_service_name]
+        action: replace
+        target_label: kubernetes_name
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Telemetry
+metadata:
+  name: science-map-telemetry
+  namespace: science-map-platform
+spec:
+  metrics:
+  - providers:
+    - name: prometheus
+  accessLogging:
+  - providers:
+    - name: stdout
+  tracing:
+  - providers:
+    - name: jaeger
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Telemetry
+metadata:
+  name: api-gateway-telemetry
+  namespace: science-map-platform
+spec:
+  selector:
+    matchLabels:
+      app: api-gateway
+  metrics:
+  - providers:
+    - name: prometheus
+    overrides:
+    - match:
+        metric: REQUEST_COUNT
+      tagOverrides:
+        destination_service_name:
+          value: "api-gateway"
+        destination_service_namespace:
+          value: "science-map-platform"
+  accessLogging:
+  - providers:
+    - name: stdout
+    overrides:
+    - match:
+        destination_service_name: api-gateway
+      providers:
+        - name: stdout
+  tracing:
+  - providers:
+    - name: jaeger
+    overrides:
+    - match:
+        destination_service_name: api-gateway
+      providers:
+        - name: jaeger
+
+
+

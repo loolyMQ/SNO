@@ -9,7 +9,7 @@ export interface ICacheConfig {
     maxRetries: number;
     retryDelayOnFailover?: number;
 }
-export interface ICacheEntry<T = any> {
+export interface ICacheEntry<T = unknown> {
     value: T;
     timestamp: number;
     ttl: number;

@@ -58,7 +58,7 @@ export class DatabaseTracing {
                 if (error instanceof Error) {
                     span.setStatus({
                         code: SpanStatusCode.ERROR,
-                        message: error.message,
+                        message: error instanceof Error ? error.message : String(error),
                     });
                     span.setAttributes({
                         'db.error.type': error.name || 'UnknownError',
@@ -66,7 +66,7 @@ export class DatabaseTracing {
                         'db.operation_duration_ms': duration,
                     });
                     span.addEvent('exception', {
-                        'exception.message': error.message,
+                        'exception.message': error instanceof Error ? error.message : String(error),
                         'exception.type': error.name,
                     });
                 }

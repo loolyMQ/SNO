@@ -1,0 +1,153 @@
+syntax = "proto3";
+
+package science_map.graph;
+
+option go_package = "github.com/science-map/platform/shared/src/proto/graph";
+
+import "google/protobuf/timestamp.proto";
+
+service GraphService {
+  rpc GetGraphData(GetGraphDataRequest) returns (GetGraphDataResponse);
+  rpc UpdateGraph(UpdateGraphRequest) returns (UpdateGraphResponse);
+  rpc AddNode(AddNodeRequest) returns (AddNodeResponse);
+  rpc RemoveNode(RemoveNodeRequest) returns (RemoveNodeResponse);
+  rpc AddEdge(AddEdgeRequest) returns (AddEdgeResponse);
+  rpc RemoveEdge(RemoveEdgeRequest) returns (RemoveEdgeResponse);
+  rpc GetNodeNeighbors(GetNodeNeighborsRequest) returns (GetNodeNeighborsResponse);
+  rpc SearchNodes(SearchNodesRequest) returns (SearchNodesResponse);
+}
+
+message GetGraphDataRequest {
+  string user_id = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+  repeated string filters = 4;
+}
+
+message GetGraphDataResponse {
+  bool success = 1;
+  GraphData data = 2;
+  string error = 3;
+}
+
+message UpdateGraphRequest {
+  string user_id = 1;
+  GraphData data = 2;
+}
+
+message UpdateGraphResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message AddNodeRequest {
+  string user_id = 1;
+  Node node = 2;
+}
+
+message AddNodeResponse {
+  bool success = 1;
+  string node_id = 2;
+  string error = 3;
+}
+
+message RemoveNodeRequest {
+  string user_id = 1;
+  string node_id = 2;
+}
+
+message RemoveNodeResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message AddEdgeRequest {
+  string user_id = 1;
+  Edge edge = 2;
+}
+
+message AddEdgeResponse {
+  bool success = 1;
+  string edge_id = 2;
+  string error = 3;
+}
+
+message RemoveEdgeRequest {
+  string user_id = 1;
+  string edge_id = 2;
+}
+
+message RemoveEdgeResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message GetNodeNeighborsRequest {
+  string user_id = 1;
+  string node_id = 2;
+  int32 depth = 3;
+  int32 limit = 4;
+}
+
+message GetNodeNeighborsResponse {
+  bool success = 1;
+  repeated Node neighbors = 2;
+  string error = 3;
+}
+
+message SearchNodesRequest {
+  string user_id = 1;
+  string query = 2;
+  int32 limit = 3;
+  int32 offset = 4;
+}
+
+message SearchNodesResponse {
+  bool success = 1;
+  repeated Node nodes = 2;
+  int32 total = 3;
+  string error = 4;
+}
+
+message GraphData {
+  repeated Node nodes = 1;
+  repeated Edge edges = 2;
+  GraphMetadata metadata = 3;
+}
+
+message Node {
+  string id = 1;
+  string label = 2;
+  string type = 3;
+  map<string, string> properties = 4;
+  Position position = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+message Edge {
+  string id = 1;
+  string source = 2;
+  string target = 3;
+  string type = 4;
+  double weight = 5;
+  map<string, string> properties = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+}
+
+message Position {
+  double x = 1;
+  double y = 2;
+  double z = 3;
+}
+
+message GraphMetadata {
+  int32 total_nodes = 1;
+  int32 total_edges = 2;
+  google.protobuf.Timestamp last_updated = 3;
+  string version = 4;
+}
+
+
+

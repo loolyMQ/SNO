@@ -14,7 +14,7 @@ export declare class SecretsMiddleware {
     private constructor();
     static getInstance(): SecretsMiddleware;
     middleware(): (req: Request, _res: Response, next: NextFunction) => void;
-    injectSecret(secretName: string, _secretType: SecretType): (req: Request, res: Response, next: NextFunction) => Response<any, Record<string, any>> | undefined;
-    validateSecretAccess(requiredSecrets: string[]): (req: Request, res: Response, next: NextFunction) => Response<any, Record<string, any>> | undefined;
+    injectSecret(secretName: string, _secretType: SecretType): (req: Request, res: Response, next: NextFunction) => Response<unknown, Record<string, unknown>> | undefined;
+    validateSecretAccess(requiredSecrets: string[]): (req: Request, res: Response, next: NextFunction) => Response<unknown, Record<string, unknown>> | undefined;
 }
 //# sourceMappingURL=middleware.d.ts.map

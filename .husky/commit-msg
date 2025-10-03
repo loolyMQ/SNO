@@ -1,0 +1,16 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+commit_regex='^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?: .{1,50}'
+
+if ! grep -qE "$commit_regex" "$1"; then
+    echo "❌ Неверный формат commit message!"
+    echo "Используйте формат: <type>(<scope>): <description>"
+    echo "Примеры:"
+    echo "  feat: добавить новую функцию"
+    echo "  fix(auth): исправить баг аутентификации"
+    echo "  docs: обновить документацию"
+    exit 1
+fi
+
+echo "✅ Commit message соответствует стандарту"

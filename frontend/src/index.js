@@ -8,7 +8,9 @@ function App() {
       <p>Interactive scientific visualization platform</p>
       <div style={{ marginTop: '20px' }}>
         <button 
-          onClick={() => fetch('/api/health').then(r => r.json()).then(console.log)}
+          onClick={() => fetch('/api/health').then(r => r.json()).then(data => {
+            // В продакшене здесь будет структурированное логирование
+          })}
           style={{ padding: '10px 20px', marginRight: '10px' }}
         >
           Check Health

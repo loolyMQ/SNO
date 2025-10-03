@@ -1,0 +1,115 @@
+name: Science Map Platform Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version'
+        required: true
+        default: 'patch'
+
+env:
+  NODE_VERSION: '18'
+  PNPM_VERSION: '9'
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        
+      - name: Run quality gates
+        run: |
+          pnpm type-check
+          pnpm lint
+          pnpm format:check
+          pnpm build
+          pnpm test:coverage
+          
+      - name: Run security scan
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+          
+      - name: Build Docker images
+        run: pnpm docker:build
+        
+      - name: Test Docker images
+        run: |
+          pnpm docker:up
+          sleep 30
+          pnpm health:check
+          pnpm docker:down
+          
+      - name: Generate changelog
+        id: changelog
+        run: |
+          if [ -f CHANGELOG.md ]; then
+            echo "changelog<<EOF" >> $GITHUB_OUTPUT
+            head -50 CHANGELOG.md >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "changelog=No changelog available" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Science Map Platform ${{ github.ref_name }}
+          body: |
+            ## 🚀 Science Map Platform ${{ github.ref_name }}
+            
+            ### 📋 Quality Gates
+            - ✅ TypeScript compilation
+            - ✅ ESLint checks
+            - ✅ Test coverage ≥80%
+            - ✅ Security scan passed
+            - ✅ Docker build successful
+            
+            ### 📦 What's Changed
+            ${{ steps.changelog.outputs.changelog }}
+            
+            ### 🐳 Docker Images
+            ```bash
+            docker pull science-map/api-gateway:${{ github.ref_name }}
+            docker pull science-map/auth-service:${{ github.ref_name }}
+            docker pull science-map/graph-service:${{ github.ref_name }}
+            docker pull science-map/search-service:${{ github.ref_name }}
+            docker pull science-map/jobs-service:${{ github.ref_name }}
+            ```
+            
+            ### 🚀 Quick Start
+            ```bash
+            git clone https://github.com/${{ github.repository }}
+            cd sno-platform
+            pnpm install
+            pnpm docker:up
+            ```
+          draft: false
+          prerelease: false

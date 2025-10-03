@@ -158,10 +158,10 @@ export class LoggerFactory {
         return this.createLogger(baseConfig);
     }
     static generateCorrelationId() {
-        return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
     }
     static generateRequestId() {
-        return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        return `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
     }
 }
 //# sourceMappingURL=logger-factory.js.map

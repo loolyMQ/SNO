@@ -20,8 +20,8 @@ export declare class CentralizedVersionMiddleware {
     static createForService(config: CentralizedVersionConfig): VersionMiddleware;
     private static getDefaultDependencies;
     static getMiddleware(serviceName: string): (req: Request, res: Response, next: NextFunction) => void;
-    static setupRoutes(app: any, serviceName: string): void;
-    static getVersionInfo(serviceName: string): any;
+    static setupRoutes(app: unknown, serviceName: string): void;
+    static getVersionInfo(serviceName: string): Record<string, unknown>;
     static getAllServices(): string[];
     static clearCache(): void;
 }

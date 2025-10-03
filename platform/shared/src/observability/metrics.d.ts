@@ -12,7 +12,9 @@ export declare class MetricsService {
     createHistogram(name: string, _description: string, _unit?: string): {
         record: (value: number) => void;
     } | undefined;
-    createGauge(name: string, _description: string, _unit?: string): any;
+    createGauge(name: string, _description: string, _unit?: string): {
+        record: (value: number) => void;
+    } | undefined;
     recordCounter(name: string, value: number, _attributes?: Record<string, string | number | boolean>): void;
     recordHistogram(name: string, value: number, _attributes?: Record<string, string | number | boolean>): void;
     recordGauge(name: string, value: number, _attributes?: Record<string, string | number | boolean>): void;

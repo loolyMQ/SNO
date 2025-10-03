@@ -5,10 +5,10 @@ export interface HealthCheckMiddlewareOptions {
     includeDetails?: boolean;
     customChecks?: Array<{
         name: string;
-        check: () => Promise<any>;
+        check: () => Promise<unknown>;
     }>;
 }
-export declare function createHealthCheckMiddleware(healthChecker: HealthChecker, options?: HealthCheckMiddlewareOptions): (req: Request, res: Response, next: NextFunction) => Promise<void | Response<any, Record<string, any>>>;
+export declare function createHealthCheckMiddleware(healthChecker: HealthChecker, options?: HealthCheckMiddlewareOptions): (req: Request, res: Response, next: NextFunction) => Promise<void | Response<unknown, Record<string, unknown>>>;
 export declare function createReadinessMiddleware(healthChecker: HealthChecker, options?: HealthCheckMiddlewareOptions): (req: Request, res: Response, next: NextFunction) => Promise<void>;
 export declare function createLivenessMiddleware(options?: {
     path?: string;

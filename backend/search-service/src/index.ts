@@ -1,27 +1,50 @@
+import './tracing';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import { createKafkaClient, ServiceConfig } from '@science-map/shared';
+import pino from 'pino';
+import { createKafkaClient } from '@science-map/shared';
+import client from 'prom-client';
+import { z } from 'zod';
+
+const logger = pino({
+  level: process.env.LOG_LEVEL || 'info',
+  transport: {
+    target: 'pino-pretty',
+    options: {
+      colorize: true,
+      translateTime: 'SYS:standard',
+    },
+  },
+});
 
 const app = express();
 const PORT = process.env.PORT || 3004;
 
-const config: ServiceConfig = {
-  port: Number(PORT),
-  kafka: {
-    brokers: [process.env.KAFKA_BROKER || 'localhost:9092'],
-    clientId: 'search-service',
-    groupId: 'search-service-group',
-  },
-};
+// Kafka configuration handled by shared factory
 
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
-const kafkaClient = createKafkaClient(config);
+const kafkaClient = createKafkaClient('search-service');
 
-app.get('/health', (req, res) => {
+// Prometheus metrics
+const register = new client.Registry();
+client.collectDefaultMetrics({ register });
+const httpRequestCounter = new client.Counter({
+  name: 'search_service_http_requests_total',
+  help: 'Total number of HTTP requests',
+  labelNames: ['method', 'route', 'status']
+});
+register.registerMetric(httpRequestCounter);
+
+app.get('/metrics', async (_req, res) => {
+  res.setHeader('Content-Type', register.contentType);
+  res.end(await register.metrics());
+});
+
+app.get('/health', (_req, res) => {
   res.json({
     success: true,
     status: 'healthy',
@@ -31,33 +54,67 @@ app.get('/health', (req, res) => {
 });
 
 app.get('/search', (req, res) => {
-  const query = req.query.q as string;
-  
+  const querySchema = z.object({
+    q: z.string().min(1,
+      { message: 'Query is required' }
+    ),
+    limit: z.coerce.number().int().min(0).max(100).optional().default(10),
+    offset: z.coerce.number().int().min(0).optional().default(0)
+  });
+
+  const parseResult = querySchema.safeParse({
+    q: req.query.q,
+    limit: req.query.limit,
+    offset: req.query.offset
+  });
+
+  if (!parseResult.success) {
+    httpRequestCounter.inc({ method: req.method, route: '/search', status: '400' });
+    return res.status(400).json({ success: false, error: 'Invalid query' });
+  }
+
+  const { q, limit, offset } = parseResult.data;
+
   const mockResults = [
     { id: 1, title: 'Computer Science', type: 'field' },
     { id: 2, title: 'Machine Learning', type: 'topic' },
     { id: 3, title: 'Data Structures', type: 'concept' },
-  ].filter(item => 
-    !query || item.title.toLowerCase().includes(query.toLowerCase())
-  );
-  
-  res.json({
+  ].filter(item => item.title.toLowerCase().includes(q.toLowerCase()))
+   .slice(offset, offset + limit);
+
+  httpRequestCounter.inc({ method: req.method, route: '/search', status: '200' });
+  return res.json({
     success: true,
+    query: q,
     results: mockResults,
-    query,
+    total: mockResults.length,
+    limit,
+    offset
   });
 });
 
 async function startServer() {
   try {
     await kafkaClient.connect();
-    console.log('✅ Search Service Kafka connected');
+    logger.info({
+      service: 'search-service',
+      action: 'kafka-connect'
+    }, 'Search Service Kafka connected');
 
-    app.listen(PORT, () => {
-      console.log(`🚀 Search Service running on port ${PORT}`);
+    app.listen(Number(PORT), () => {
+      logger.info({
+        service: 'search-service',
+        port: PORT,
+        action: 'server-start'
+      }, 'Search Service running');
     });
   } catch (error) {
-    console.error('❌ Search Service startup error:', error);
+    logger.error({
+      service: 'search-service',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      action: 'startup-error'
+    }, 'Search Service startup error');
     process.exit(1);
   }
 }

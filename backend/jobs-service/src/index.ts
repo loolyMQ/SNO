@@ -1,27 +1,30 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import { createKafkaClient, ServiceConfig } from '@science-map/shared';
+import pino from 'pino';
+import { createKafkaClient } from '@science-map/shared';
+
+const logger = pino({
+  level: process.env.LOG_LEVEL || 'info',
+  transport: {
+    target: 'pino-pretty',
+    options: {
+      colorize: true,
+      translateTime: 'SYS:standard',
+    },
+  },
+});
 
 const app = express();
 const PORT = process.env.PORT || 3005;
-
-const config: ServiceConfig = {
-  port: Number(PORT),
-  kafka: {
-    brokers: [process.env.KAFKA_BROKER || 'localhost:9092'],
-    clientId: 'jobs-service',
-    groupId: 'jobs-service-group',
-  },
-};
 
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
-const kafkaClient = createKafkaClient(config);
+const kafkaClient = createKafkaClient('jobs-service');
 
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.json({
     success: true,
     status: 'healthy',
@@ -30,7 +33,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-app.get('/jobs', (req, res) => {
+app.get('/jobs', (_req, res) => {
   const mockJobs = [
     { id: 1, type: 'data-processing', status: 'completed' },
     { id: 2, type: 'report-generation', status: 'running' },
@@ -53,13 +56,25 @@ app.post('/jobs', (req, res) => {
 async function startServer() {
   try {
     await kafkaClient.connect();
-    console.log('✅ Jobs Service Kafka connected');
+    logger.info({
+      service: 'jobs-service',
+      action: 'kafka-connect'
+    }, 'Jobs Service Kafka connected');
 
-    app.listen(PORT, () => {
-      console.log(`🚀 Jobs Service running on port ${PORT}`);
+    app.listen(Number(PORT), () => {
+      logger.info({
+        service: 'jobs-service',
+        port: PORT,
+        action: 'server-start'
+      }, 'Jobs Service running');
     });
   } catch (error) {
-    console.error('❌ Jobs Service startup error:', error);
+    logger.error({
+      service: 'jobs-service',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      action: 'startup-error'
+    }, 'Jobs Service startup error');
     process.exit(1);
   }
 }

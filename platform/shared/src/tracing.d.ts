@@ -62,11 +62,11 @@ export declare class TracingManager {
     traceKafkaOperation(data: IKafkaTraceData): Span;
     traceDatabaseOperation(data: IDatabaseTraceData): Span;
     getCurrentTraceContext(): ITraceContext | null;
-    addAttributes(attributes: Record<string, any>): void;
-    addEvent(name: string, attributes?: Record<string, any>): void;
+    addAttributes(attributes: Record<string, unknown>): void;
+    addEvent(name: string, attributes?: Record<string, unknown>): void;
     shutdown(): Promise<void>;
 }
-export declare function createTracingMiddleware(tracingManager: TracingManager): (req: any, res: any, next: () => void) => void;
+export declare function createTracingMiddleware(tracingManager: TracingManager): (req: unknown, res: unknown, next: () => void) => void;
 export declare function Trace(operationName?: string): (target: object, propertyName: string, descriptor: PropertyDescriptor) => PropertyDescriptor;
 export declare let globalTracingManager: TracingManager | null;
 export declare class TracingFactory {

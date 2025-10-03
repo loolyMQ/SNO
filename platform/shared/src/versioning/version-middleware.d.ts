@@ -26,7 +26,7 @@ export declare class VersionMiddleware {
     setupRoutes(app: {
         get: (path: string, handler: (req: Request, res: Response) => void) => void;
     }): void;
-    getVersionInfo(): any;
+    getVersionInfo(): Record<string, unknown>;
 }
 declare global {
     namespace Express {

@@ -29,7 +29,7 @@ export class ErrorBoundary {
             error: structuredError,
             service,
             context,
-        }, `Error in ${service}: ${error.message}`);
+        }, `Error in ${service}: ${error instanceof Error ? error.message : String(error)}`);
         const handler = this.errorHandlers.get(service);
         if (handler) {
             try {
@@ -49,7 +49,7 @@ export class ErrorBoundary {
         const userId = this.extractUserId(context);
         return {
             code: ErrorCode.SYSTEM_DATABASE_ERROR,
-            message: error.message,
+            message: error instanceof Error ? error.message : String(error),
             severity: ErrorSeverity.HIGH,
             timestamp: Date.now(),
             correlationId: correlationId || '',
@@ -75,7 +75,7 @@ export class ErrorBoundary {
     }
     isRetryableError(error) {
         const retryablePatterns = [/timeout/i, /connection/i, /network/i, /temporary/i, /unavailable/i];
-        return retryablePatterns.some(pattern => pattern.test(error.message));
+        return retryablePatterns.some(pattern => pattern.test(error instanceof Error ? error.message : String(error)));
     }
 }
 export const errorBoundaryMiddleware = (service) => {

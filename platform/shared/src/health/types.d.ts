@@ -5,7 +5,7 @@ export interface HealthCheckResult {
     version: string;
     environment: string;
     checks: ServiceHealthCheck[];
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
 }
 export interface ServiceHealthCheck {
     name: string;
@@ -13,7 +13,7 @@ export interface ServiceHealthCheck {
     responseTime?: number;
     lastCheck?: number;
     error?: string;
-    details?: Record<string, any>;
+    details?: Record<string, unknown>;
 }
 export interface HealthCheckConfig {
     timeout: number;

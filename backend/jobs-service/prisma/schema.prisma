@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Job {
+  id          String   @id @default(cuid())
+  name        String
+  type        String
+  status      String   @default("pending") // pending, running, completed, failed, cancelled
+  priority    Int      @default(0)
+  data        String?  // JSON string of job data
+  result      String?  // JSON string of job result
+  error       String?  // Error message if failed
+  progress    Int      @default(0) // Progress percentage
+  attempts    Int      @default(0)
+  maxAttempts Int      @default(3)
+  scheduledAt DateTime?
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([name]) // Index for job name searches
+  @@index([type]) // Index for job type filtering
+  @@index([status]) // Index for status filtering
+  @@index([priority]) // Index for priority-based queries
+  @@index([scheduledAt]) // Index for scheduled job queries
+  @@index([createdAt]) // Index for time-based queries
+  @@index([startedAt]) // Index for running job queries
+  @@index([completedAt]) // Index for completed job queries
+  @@map("jobs")
+}
+
+model JobQueue {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  isActive    Boolean  @default(true)
+  maxConcurrency Int   @default(5)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([name]) // Index for queue name searches
+  @@index([isActive]) // Index for active queue filtering
+  @@map("job_queues")
+}
+
+model JobLog {
+  id          String   @id @default(cuid())
+  jobId       String
+  level       String   // info, warn, error, debug
+  message     String
+  data        String?  // JSON string of additional data
+  createdAt   DateTime @default(now())
+
+  @@index([jobId]) // Index for job-specific logs
+  @@index([level]) // Index for log level filtering
+  @@index([createdAt]) // Index for time-based queries
+  @@map("job_logs")
+}

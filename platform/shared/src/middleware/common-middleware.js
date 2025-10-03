@@ -75,7 +75,7 @@ export class CommonMiddleware {
         app.use(express.urlencoded({ extended: true, limit: '10mb' }));
     }
     setupHealthCheck(app, serviceName) {
-        app.get('/health', (_req, res) => {
+        app.get('/health', (req, res) => {
             res.json({
                 success: true,
                 status: 'healthy',
@@ -88,7 +88,7 @@ export class CommonMiddleware {
         });
     }
     setupMetrics(app, register) {
-        app.get('/metrics', async (_req, res) => {
+        app.get('/metrics', async (req, res) => {
             try {
                 res.set('Content-Type', register.contentType || 'text/plain');
                 res.end(await register.metrics());

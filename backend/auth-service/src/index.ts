@@ -1,7 +1,19 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import pino from 'pino';
 import { createKafkaClient, ServiceConfig } from '@science-map/shared';
+
+const logger = pino({
+  level: process.env.LOG_LEVEL || 'info',
+  transport: {
+    target: 'pino-pretty',
+    options: {
+      colorize: true,
+      translateTime: 'SYS:standard',
+    },
+  },
+});
 
 const app = express();
 const PORT = process.env.PORT || 3003;
@@ -34,27 +46,39 @@ app.post('/auth/login', (req, res) => {
   res.json({
     success: true,
     token: 'mock-jwt-token',
-    user: { id: 1, email: req.body.email },
+    user: { id: 1, email: req.body?.email || 'unknown@example.com' },
   });
 });
 
 app.post('/auth/register', (req, res) => {
   res.json({
     success: true,
-    user: { id: 1, email: req.body.email },
+    user: { id: 1, email: req.body?.email || 'unknown@example.com' },
   });
 });
 
 async function startServer() {
   try {
     await kafkaClient.connect();
-    console.log('✅ Auth Service Kafka connected');
+    logger.info({
+      service: 'auth-service',
+      action: 'kafka-connect'
+    }, 'Auth Service Kafka connected');
 
-    app.listen(PORT, () => {
-      console.log(`🚀 Auth Service running on port ${PORT}`);
+    app.listen(Number(PORT), () => {
+      logger.info({
+        service: 'auth-service',
+        port: PORT,
+        action: 'server-start'
+      }, 'Auth Service running');
     });
   } catch (error) {
-    console.error('❌ Auth Service startup error:', error);
+    logger.error({
+      service: 'auth-service',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      action: 'startup-error'
+    }, 'Auth Service startup error');
     process.exit(1);
   }
 }

@@ -1,0 +1,138 @@
+syntax = "proto3";
+
+package science_map.jobs;
+
+option go_package = "github.com/science-map/platform/shared/src/proto/jobs";
+
+import "google/protobuf/timestamp.proto";
+
+service JobsService {
+  rpc CreateJob(CreateJobRequest) returns (CreateJobResponse);
+  rpc GetJob(GetJobRequest) returns (GetJobResponse);
+  rpc ListJobs(ListJobsRequest) returns (ListJobsResponse);
+  rpc UpdateJob(UpdateJobRequest) returns (UpdateJobResponse);
+  rpc DeleteJob(DeleteJobRequest) returns (DeleteJobResponse);
+  rpc StartJob(StartJobRequest) returns (StartJobResponse);
+  rpc StopJob(StopJobRequest) returns (StopJobResponse);
+  rpc GetJobStatus(GetJobStatusRequest) returns (GetJobStatusResponse);
+}
+
+message CreateJobRequest {
+  string name = 1;
+  string type = 2;
+  string description = 3;
+  map<string, string> parameters = 4;
+  string user_id = 5;
+  int32 priority = 6;
+  google.protobuf.Timestamp scheduled_at = 7;
+}
+
+message CreateJobResponse {
+  bool success = 1;
+  string job_id = 2;
+  string error = 3;
+}
+
+message GetJobRequest {
+  string job_id = 1;
+  string user_id = 2;
+}
+
+message GetJobResponse {
+  bool success = 1;
+  Job job = 2;
+  string error = 3;
+}
+
+message ListJobsRequest {
+  string user_id = 1;
+  string status = 2;
+  string type = 3;
+  int32 limit = 4;
+  int32 offset = 5;
+  string sort_by = 6;
+  string sort_order = 7;
+}
+
+message ListJobsResponse {
+  bool success = 1;
+  repeated Job jobs = 2;
+  int32 total = 3;
+  string error = 4;
+}
+
+message UpdateJobRequest {
+  string job_id = 1;
+  string name = 2;
+  string description = 3;
+  map<string, string> parameters = 4;
+  string user_id = 5;
+}
+
+message UpdateJobResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message DeleteJobRequest {
+  string job_id = 1;
+  string user_id = 2;
+}
+
+message DeleteJobResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message StartJobRequest {
+  string job_id = 1;
+  string user_id = 2;
+}
+
+message StartJobResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message StopJobRequest {
+  string job_id = 1;
+  string user_id = 2;
+}
+
+message StopJobResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message GetJobStatusRequest {
+  string job_id = 1;
+  string user_id = 2;
+}
+
+message GetJobStatusResponse {
+  bool success = 1;
+  string status = 2;
+  int32 progress = 3;
+  string error = 4;
+}
+
+message Job {
+  string id = 1;
+  string name = 2;
+  string type = 3;
+  string description = 4;
+  string status = 5;
+  int32 progress = 6;
+  map<string, string> parameters = 7;
+  string user_id = 8;
+  int32 priority = 9;
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+  google.protobuf.Timestamp started_at = 12;
+  google.protobuf.Timestamp completed_at = 13;
+  string error_message = 14;
+  map<string, string> metadata = 15;
+}
+
+
+

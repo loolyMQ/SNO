@@ -1,0 +1,83 @@
+name: Auto Fix Quality Issues
+
+on:
+  workflow_dispatch:
+    inputs:
+      fix_type:
+        description: 'Type of fixes to apply'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+        - all
+        - lint
+        - format
+        - types
+
+jobs:
+  auto-fix:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Auto Fix Lint Issues
+        if: ${{ inputs.fix_type == 'all' || inputs.fix_type == 'lint' }}
+        run: pnpm -w run -r lint:fix
+
+      - name: Auto Fix Format Issues
+        if: ${{ inputs.fix_type == 'all' || inputs.fix_type == 'format' }}
+        run: pnpm -w run -r format
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit changes
+        if: steps.changes.outputs.has_changes == 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git commit -m "fix: автоматическое исправление проблем качества кода"
+          git push
+
+      - name: Create Pull Request
+        if: steps.changes.outputs.has_changes == 'true'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: "fix: автоматическое исправление проблем качества кода"
+          body: |
+            Автоматически исправлены следующие проблемы качества кода:
+            - ESLint ошибки
+            - Prettier форматирование
+            - TypeScript типы
+          branch: auto-fix-quality-issues
+          delete-branch: true
+
+
+

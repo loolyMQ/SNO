@@ -38,7 +38,7 @@ export declare class PoolMonitor {
     private metrics;
     private alerts;
     private monitoringInterval?;
-    constructor(poolManager: any, config: IPoolMonitorConfig, logger: pino.Logger);
+    constructor(poolManager: unknown, config: IPoolMonitorConfig, logger: pino.Logger);
     start(): void;
     stop(): void;
     private collectMetrics;
@@ -63,5 +63,5 @@ export declare class PoolPerformanceAnalyzer {
     };
     generateOptimizationRecommendations(poolName: string): string[];
 }
-export declare const createPoolMonitor: (poolManager: any, config?: Partial<IPoolMonitorConfig>, logger?: pino.Logger) => PoolMonitor;
+export declare const createPoolMonitor: (poolManager: unknown, config?: Partial<IPoolMonitorConfig>, logger?: pino.Logger) => PoolMonitor;
 //# sourceMappingURL=pool-monitor.d.ts.map

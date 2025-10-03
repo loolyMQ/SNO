@@ -1,0 +1,75 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: 100vh;
+}
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-main {
+  flex: 1;
+  padding: 2rem 0;
+}
+
+.app-footer {
+  background: #1a202c;
+  color: white;
+  padding: 2rem 0;
+  margin-top: auto;
+}
+
+.app-footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.app-footer-links {
+  display: flex;
+  gap: 2rem;
+}
+
+.app-footer-links a {
+  color: #a0aec0;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.app-footer-links a:hover {
+  color: white;
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .app-main {
+    padding: 1rem 0;
+  }
+
+  .app-footer-content {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .app-footer-links {
+    justify-content: center;
+  }
+}

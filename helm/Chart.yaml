@@ -1,0 +1,31 @@
+apiVersion: v2
+name: science-map-platform
+description: Science Map Platform - A comprehensive scientific research mapping system
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - science
+  - research
+  - mapping
+  - knowledge-graph
+  - microservices
+home: https://github.com/your-org/science-map-platform
+sources:
+  - https://github.com/your-org/science-map-platform
+maintainers:
+  - name: Science Map Team
+    email: team@sciencemap.com
+dependencies:
+  - name: postgresql
+    version: "12.1.2"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: postgresql.enabled
+  - name: redis
+    version: "17.3.7"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: redis.enabled
+  - name: kafka
+    version: "22.1.5"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: kafka.enabled

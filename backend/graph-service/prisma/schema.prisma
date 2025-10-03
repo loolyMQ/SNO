@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Node {
+  id          String   @id @default(cuid())
+  label       String
+  type        String
+  properties   String? // JSON string of additional properties
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  outgoingEdges Edge[] @relation("SourceNode")
+  incomingEdges Edge[] @relation("TargetNode")
+
+  @@index([label]) // Index for label searches
+  @@index([type]) // Index for type filtering
+  @@index([createdAt]) // Index for time-based queries
+  @@map("nodes")
+}
+
+model Edge {
+  id          String   @id @default(cuid())
+  sourceId    String
+  targetId    String
+  type        String
+  weight      Float?   @default(1.0)
+  properties   String? // JSON string of additional properties
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  source Node @relation("SourceNode", fields: [sourceId], references: [id], onDelete: Cascade)
+  target Node @relation("TargetNode", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@index([sourceId]) // Index for source node queries
+  @@index([targetId]) // Index for target node queries
+  @@index([type]) // Index for edge type filtering
+  @@index([weight]) // Index for weight-based queries
+  @@index([createdAt]) // Index for time-based queries
+  @@map("edges")
+}
+
+model GraphSnapshot {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  nodes       String   // JSON string of nodes
+  edges       String   // JSON string of edges
+  version     String   @default("1.0.0")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([name]) // Index for name searches
+  @@index([version]) // Index for version filtering
+  @@index([createdAt]) // Index for time-based queries
+  @@map("graph_snapshots")
+}

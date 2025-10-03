@@ -38,5 +38,5 @@ export declare class TracingService {
     }): void;
     shutdown(): Promise<void>;
 }
-export declare const tracingMiddleware: (_serviceName: string) => (req: any, res: any, next: () => void) => void;
+export declare const tracingMiddleware: (_serviceName: string) => (req: unknown, res: unknown, next: () => void) => void;
 //# sourceMappingURL=tracing.d.ts.map

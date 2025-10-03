@@ -69,7 +69,7 @@ export class TracingService {
         span.recordException(error);
         span.setStatus({
             code: SpanStatusCode.ERROR,
-            message: error.message,
+            message: error instanceof Error ? error.message : String(error),
         });
     }
     finishSpan(span) {
